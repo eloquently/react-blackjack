@@ -70,7 +70,7 @@ npm install --save-dev webpack
 
 Now we need to find the binary created by `npm`. On my system (a Cloud9 workspace), it is in the `node_modules/.bin/` directory. To run `webpack`, use `node_modules/.bin/webpack`.
 
-<aside>Other tutorials and guides may install `webpack` globally using the `-g` flag. This allows `webpack` to be run with `webpack` rather than `node_modules/.bin/webpack` on the command line. We prefer not to use global packages where possible to avoid dependency issues.</aside>
+<aside style="background-color:lightblue; margin-bottom: 16px;">Other tutorials and guides may install `webpack` globally using the `-g` flag. This allows `webpack` to be run with `webpack` rather than `node_modules/.bin/webpack` on the command line. We prefer not to use global packages where possible to avoid dependency issues.</aside>
 
 We also will need `babel` in order to use ES6. Specifically, we want `webpack` to run `babel` which will "transpile" our ES6 to a version of JavaScript supported by browsers.
 
@@ -132,7 +132,7 @@ First, let's make an HTML file that will serve our application:
 
 Now, let's make a JavaScript file that inserts our component into the document.
 
-```js
+```jsx
 // app/index.js
 
 import React from 'react';
@@ -147,7 +147,7 @@ ReactDOM.render(
 
 Finally, we need the code for our component:
 
-```js
+```jsx
 // app/components/app.js
 
 import React from 'react';
@@ -162,3 +162,54 @@ export default class App extends React.Component {
 ```
 
 Now if we run `node_modules/.bin/webpack`, we should see a `bundle.js` file created in the `build/` directory. If we view the `build/index.html` page in a browser, we should see "Hello, world!".
+
+## Talking Through the First Build
+
+The `index.html` file is a pretty typical HTML file. It does not contain any `script` tags in the header, but it does have a `script` tag in the `body`. The `body` also has a single `div`. The `div` is empty to start with, but it is where `bundle.js` will load its components. The `bundle.js` script is the result of the `webpack` compilation of our programs and all of their dependencies. This means we don't need to include separate `script` tags for each of our dependencies (react, react-dom, etc.).
+
+The `index.js` file finds the `div` with an `id` of `app` and renders `<App />` into in using the `ReactDOM.render` method. This is the first time we're seeing JSX in action. JSX is an extenion to JavaScript that allows us to use things that look like HTML or XML elements in code without turning them into strings or functions. Under the hood, there is a JSX preprocessor that converts tags like `<App />` into normal JavaScript functions that eventually return strings of HTML that get output into the browser.
+
+The `app.js` file defines what JavaScript should render when we say `<App />`. We call this the App component. For now, our component is very simple -- it just renders a header, but components can get very complicated. Components can be composed of other components, and they can change their display based on the state of the application passed to the component as "props".
+
+We could have included both the `app.js` file and the `index.js` file in a single file. However, it is generally good practice to keep your components in individual files to organize your code and emphasize that components are meant to be interchangeable and independent.
+
+## Designing our Game Application
+
+
+### Components
+
+One way to design a React front-end is to start with a basic sketch of the entire view, and try to break it down into components. This process can be more of an art than a science, and there is not always a correct way to do this. Generally if you see the same type of element repeated multiple times, that element should be a component.
+
+For our application, we will have an `App` component that contains everything else. The `App` component will contain an `Info` component at the top that displays the player's record, the player's current score, and buttons that allow the player to "hit" (draw another card) or "stand" (stop drawing cards). The `App` component will also contain two `Hand` components that show several `Card` components. One of these will represent the player's hand and the other will represent the dealer's hand.
+
+### State
+
+We will be using `redux` to manage our application's data. `redux` requires us to use a single variable as state. For this application, we'll be using a `Map` from the `Immutable.js` package. A `Map` is analgous to a `Hash` in Ruby or a JavaScript object except it is immutable. That means that every time you want to change a `Map` you will need to make a copy of it and change the copy while leaving the original `Map` alone.
+
+<aside style="background-color:lightblue; margin-bottom: 16px;">It's perfectly fine to use a JavaScript object or any other data structure as a way to keep track of the application's state as long as you are careful not to mutate the state object. We eliminate this concern by using an immutable `Map`.</aside>
+
+We want our state `Map` to keep track of the following variables:
+
+- Player's win count
+- Player's loss count
+- Player's hand
+- Dealer's hand
+- Cards remaining in deck
+- Current status of game (we'll use a boolean variable called hasStood -- if this is true, it is the dealer's turn to draw)
+ 
+It can be useful to set up the state of the application so that you have some data to work with while you're working on the components. Let's do that now.
+
+```jsx
+// app/index.js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Map } from 'immutable'
+import App from './components/app.js';
+
+
+
+ReactDOM.render(
+    <App />,
+    document.getElementById('app')
+);
+```

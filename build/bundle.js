@@ -60,7 +60,35 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	_reactDom2.default.render(_react2.default.createElement(_app2.default, null), document.getElementById('app')); // app/index.js
+	var ranks = ['A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']; // app/index.js
+
+	var suits = ['S', 'C', 'H', 'D'];
+
+	var deck = [];
+
+	ranks.forEach(function (r) {
+	    suits.forEach(function (s) {
+	        deck.push({ "rank": r, "suit": s });
+	    });
+	});
+
+	var shuffle = function shuffle(a) {
+	    var j = void 0,
+	        x = void 0,
+	        i = void 0;
+	    for (i = a.length; i; i -= 1) {
+	        j = Math.floor(Math.random() * i);
+	        x = a[i - 1];
+	        a[i - 1] = a[j];
+	        a[j] = x;
+	    }
+	};
+
+	shuffle(deck);
+
+	console.log(deck);
+
+	_reactDom2.default.render(_react2.default.createElement(_app2.default, null), document.getElementById('app'));
 
 /***/ },
 /* 1 */
