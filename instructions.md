@@ -98,14 +98,23 @@ module.exports = {
             {
                 test: /.jsx?$/,
                 loader: 'babel-loader',
-                exclude: /node_modules/,
-                query: {
-                    presets: ['es2015', 'react']
-                }
+                exclude: /node_modules/
             }
         ]
     },
 };
+```
+
+We also need to tell `babel` which presets to use while transforming our code. We do this in the `package.json` file:
+
+```js
+// package.json
+{
+    //...
+    "babel": {
+        "presets": ["es2015", "react"]
+    }
+}
 ```
 
 ## A First Build
@@ -162,6 +171,21 @@ export default class App extends React.Component {
 ```
 
 Now if we run `node_modules/.bin/webpack`, we should see a `bundle.js` file created in the `build/` directory. If we view the `build/index.html` page in a browser, we should see "Hello, world!".
+
+Instead of typing out `node_modules/.bin/webpack` each time we want to run the build process, we can create a script for npm to run in `package.json`. To do so, let's add the following to `package.json`:
+
+```js
+// package.json
+{
+    //...
+    "scripts": {
+        "webpack": "node_modules/.bin/webpack",
+        "webpack:watch": "npm run webpack -- --watch"
+    }
+}
+```
+
+Now we can create `bundle.js` by running `npm run webpack` and if we ant `webpack` to update `bundle.js` each time we save a file, we can run `npm run webpack:watch`
 
 ## Talking Through the First Build
 
@@ -222,7 +246,7 @@ ReactDOM.render(
 
 We need to write some helper functions to set up our state. To keep our code organized, let's do so in a new file in a new directory. Create a new folder inside `app/` called `lib/`. Inside `lib/` create a file called `cards.js`. 
 
-Let's create a `shuffle` method and a method that will create a new deck. I shamelessly stole the `shuffle` method from Stack Overflow [here](http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript). We'll also need a `new_deck` method that will add a new card to the deck for each rank and suit.
+Let's create a `shuffle` method and a method that will create a new deck. I shamelessly stole the `shuffle` method from Stack Overflow [here](http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript). We'll also need a `newDeck` method that will add a new card to the deck for each rank and suit.
 
 ```js
 // app/lib/cards.js
@@ -237,7 +261,7 @@ export const shuffle = (array) => {
     }
 };
 
-export const new_deck = () => {
+export const newDeck = () => {
     const ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
     const suits = ['S', 'C', 'H', 'D'];
     
@@ -263,14 +287,14 @@ arr.push(1); // This is fine because it mutates an existing array
 arr = [1, 2, 3]; // This will break because it replaces the existing array
 ```
 
-Now we'll import the `new_deck` method into our `index.js` file, and create a new deck.
+Now we'll import the `newDeck` method into our `index.js` file, and create a new deck.
 
 ```js
 // app/index.js
 
-import { new_deck } from './lib/cards.js';
+import { newDeck } from './lib/cards.js';
 
-const deck = new_deck();
+const deck = newDeck();
 console.log(deck);
 ```
 
@@ -287,9 +311,192 @@ Immutable.js provides us with a `fromJS` method that allows us to convert JavaSc
 ```js
 // app/index.js
 
-const deck = fromJS(new_deck());
+const deck = fromJS(newDeck());
 console.log(deck);
 ```
 
 Since we're dealing with Immutable.js objects rather than native JavaScript objects, it's hard to view them in the console. To fix that, I installed a [chrome extension](https://chrome.google.com/webstore/detail/immutablejs-object-format/hgldghadipiblonfkkicmgcbbijnpeog) that gives a custom formatter for Immutable.js objects. After you install it, you may need to close the developer tools console and refresh the page. You will also need to enable custom formatters in the developer tools options (access this by pressing `F1` after clicking on the developer tools console).
+
+You should see a `List` containing `Map`s for each card.
+
+## Player and Dealer Hands
+
+The hands for the player and dealer will also be immutable `List`s. We are going to use the `takeLast` and `skipLast` methods from `List` to deal cards. We will also have to change `const deck` to `let deck` as the `deck` variable will be pointing to new immutable `List`s rather than pointing to a single array that mutates.
+
+
+The code should look something like this:
+
+```js
+let deck = fromJS(newDeck());
+console.log("start deck:");
+console.log(deck);
+
+let player_hand = deck.takeLast(2);
+deck = deck.skipLast(2);
+let dealer_hand = deck.takeLast(2);
+deck = deck.skipLast(2);
+
+console.log("end deck:");
+console.log(deck);
+console.log("player_hand:");
+console.log(player_hand);
+console.log("dealer_hand:");
+console.log(dealer_hand);
+```
+
+Now if you refresh the page and look at the console, you should see that the player and the dealer each have two cards and the deck starts with 52 cards and ends up with 48 cards.
+
+Since we'll be dealing cards from the deck often, let's write a function that deals cards for us. It's annoying and dangerous to rely on printing out all of our results to the console. Let's setup our testing environment and write the tests for our `deal` function before we implement the method.
+
+We're going to use `mocha` as our test framework and `chai` as our assertion library. Let's install those packages now:
+
+```bash
+npm install --save-dev mocha chai
+```
+
+To run the tests, we'll use the command
+
+```bash
+mocha --compilers js:babel-core/register --recursive
+```
+
+This tells `mocha` to use `babel` to transfrom our code from `ES6` and to search through our project recursively to find any tests to run.
+
+We don't want to type this out each time we want to run our tests, so we can add this to our `webpack.config.js` file.
+
+```js
+// webpack.config.js
+
+module.exports = {
+    // ...,
+    
+    "scripts": {
+        "test": "mocha --compilers js:babel-core/register --recursive"
+    }
+}
+```
+
+Now we can run our tests with:
+
+```bash
+npm run test
+```
+
+We also want to set up our tests to run each time we save a file (similar to using `guard` in Ruby). To do that, `mocha` provides us with a `--watch` option. Let's add another script to our `webpack` configuration:
+
+```js
+// webpack.config.js
+
+module.exports = {
+    // ...,
+    
+    "scripts": {
+        // ...
+        "test": "mocha --compilers js:babel-core/register --recursive",
+        "test:watch": "npm run test --watch"
+    }
+}
+```
+
+To keep our test code DRY, we are going to want a test helper file that requires all the libraries we will need for testing. Create a folder for tests `test/` and create a `test_helper.js` file inside.
+
+We are going to import `chai` and a library called `chai-immutable` that makes it easy for us to test Immutable.js objects.
+
+```js
+// test/test_helper.js
+import chai from 'chai';
+import chaiImmutable from 'chai-immutable';
+
+chai.use(chaiImmutable);
+```
+
+To tell `mocha` to load this helper file, we'll add the `--require ./test/test_helper.js` option to our `test` script call in the webpack configuration:
+
+```js
+// webpack.config.js
+
+module.exports = {
+    // ...,
+    
+    "scripts": {
+        // ...
+        "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive",
+        "test:watch": "npm run test --watch"
+    }
+}
+```
+
+Now let's write some tests for the `cards.js` file that we had previously been testing with `console.log`. We'll try to mirror our `app/` directory with our `test/` directory, so we'll put this test in `test/lib/cards_spec.js`.
+
+```js
+// test/lib/cards_spec.js
+import { expect } from 'chai';
+import { List } from 'immutable';
+
+import { newDeck, deal } from '../../app/lib/cards';
+
+describe('cards.js', () => {
+    describe('newDeck', () => {
+        it('returns an immutable list', () => {
+            expect(newDeck()).to.be.instanceOf(List);
+        });
+        it('has 52 elements', () => {
+            expect(newDeck().size).to.eq(52);
+        });
+    });
+});
+```
+
+This is how you write tests using `mocha` and `chai`. The code looks a lot like the Rails testing library `rspec`. First, we import the necessary modules from external libraries. For these tests, we need to import the `expect` function from `chai`. We also need to import the `List` object from Immutable.JS. Then we import the modules from our code we are testing. In this case, we import `newDeck` and `deal` from the `cards.js` file.
+
+Then we set up a couple of `describe` blocks. These help us organize our tests, and each nested `describe` will show up indented one level in the tests. The first argument passed to `describe` is the name of the thing we are testing. Nothing magical happens with the name string, so feel free to type whatever you want. The second argument is a function that contains more `describe` blocks or tests.
+
+Each `it` block corresponds to one test. Each test should check for one thing and should be mostly independent on other tests. Like the describe blocks, the `it` blocks take a string as the first argument. You should choose a string that reads like a grammatical sentence. The second argument to an `it` block is a function that contains the actual code for our test. This should also sound natural if you say it aloud.
+
+You can read our tests like this:
+
+- Look at `cards.js`.
+    - Look at the `newDeck` function.
+    - It returns an immutable list
+        - Specifically, we expect the result of `newDeck()` to be an instance of `List`
+    - It has 52 elements
+        - Specifically, we expect the size of `newDeck()` to equal 52
+
+
+
+We also want some tests for the `deal` method. One thing to note about these tests is that we only run the `newDeck` function once inside the `deal` `describe` block. This makes our code more DRY and prevents unnecessary runs of code. We can access variables and constants declared outside of an `it` block as long as they are declared inside the same `describe` as the `it`.
+
+```js
+// test/lib/cards_spec.js
+
+// ...
+describe('cards.js', () => {
+   // ...
+   describe('deal', () => {
+        const deck = newDeck();
+        const n = 5;
+        const [new_deck, new_hand] = deal(deck, n);
+
+        it('returns smaller deck', () => {
+            expect(new_deck.size).to.eq(52 - n);
+        });
+        
+        it('does not change cards in deck', () => {
+            for(let i = 0; i < new_deck.get(i); i++) {
+                expect(new_deck.get(i)).to.eq(deck.get(i));
+            } 
+        });
+
+        it('returns hand of n cards', () => {
+            expect(new_hand.size).to.eq(n);
+        });
+        
+        it('puts correct cards in hand', () => {
+            for(let i = n-1; i >= 0; i--) {
+                expect(new_hand.get(i)).to.eq(deck.get(51-(n-1)+i));
+            }
+        });
+    });
+});
+```
 

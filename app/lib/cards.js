@@ -1,5 +1,7 @@
 // app/lib/cards.js
 
+import { fromJS } from 'immutable';
+
 export const shuffle = (array) => {
     let j, x, i;
     for (i = array.length; i; i -= 1) {
@@ -10,7 +12,7 @@ export const shuffle = (array) => {
     }
 };
 
-export const new_deck = () => {
+export const newDeck = () => {
     const ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
     const suits = ['S', 'C', 'H', 'D'];
     
@@ -24,5 +26,12 @@ export const new_deck = () => {
     
     shuffle(deck);
     
-    return deck;
+    return fromJS(deck);
+};
+
+// deal n cards from the end of List deck
+export const deal = (deck, n) => {
+    let dealt_cards = deck.takeLast(n);
+    let newDeck = deck.skipLast(n);
+    return [newDeck, dealt_cards];
 };

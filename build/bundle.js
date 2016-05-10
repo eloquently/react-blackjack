@@ -46,6 +46,9 @@
 
 	'use strict';
 
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); // app/index.js
+
+
 	var _react = __webpack_require__(1);
 
 	var _react2 = _interopRequireDefault(_react);
@@ -64,9 +67,34 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var deck = (0, _immutable.fromJS)((0, _cards.new_deck)()); // app/index.js
-
+	var deck = (0, _immutable.fromJS)((0, _cards.newDeck)());
+	console.log("start deck:");
 	console.log(deck);
+
+	var player_hand = void 0,
+	    dealer_hand = void 0;
+
+	var _deal = (0, _cards.deal)(deck, 2);
+
+	var _deal2 = _slicedToArray(_deal, 2);
+
+	deck = _deal2[0];
+	player_hand = _deal2[1];
+
+	var _deal3 = (0, _cards.deal)(deck, 2);
+
+	var _deal4 = _slicedToArray(_deal3, 2);
+
+	deck = _deal4[0];
+	dealer_hand = _deal4[1];
+
+
+	console.log("end deck:");
+	console.log(deck);
+	console.log("player_hand:");
+	console.log(player_hand);
+	console.log("dealer_hand:");
+	console.log(dealer_hand);
 
 	_reactDom2.default.render(_react2.default.createElement(_app2.default, null), document.getElementById('app'));
 
@@ -20213,14 +20241,16 @@
 
 /***/ },
 /* 169 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	// app/lib/cards.js
+	exports.deal = exports.newDeck = exports.shuffle = undefined;
+
+	var _immutable = __webpack_require__(170);
 
 	var shuffle = exports.shuffle = function shuffle(array) {
 	    var j = void 0,
@@ -20232,9 +20262,9 @@
 	        array[i - 1] = array[j];
 	        array[j] = x;
 	    }
-	};
+	}; // app/lib/cards.js
 
-	var new_deck = exports.new_deck = function new_deck() {
+	var newDeck = exports.newDeck = function newDeck() {
 	    var ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
 	    var suits = ['S', 'C', 'H', 'D'];
 
@@ -20248,7 +20278,14 @@
 
 	    shuffle(deck);
 
-	    return deck;
+	    return (0, _immutable.fromJS)(deck);
+	};
+
+	// deal n cards from the end of List deck
+	var deal = exports.deal = function deal(deck, n) {
+	    var dealt_cards = deck.takeLast(2);
+	    var newDeck = deck.skipLast(2);
+	    return [newDeck, dealt_cards];
 	};
 
 /***/ },

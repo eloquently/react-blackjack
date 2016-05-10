@@ -1,21 +1,18 @@
 const path = require('path');
 
 module.exports = {
-    entry: "./app/index.js",
-    output: {
-        path: path.join(__dirname, 'build'),
-        filename: "bundle.js"
+    "entry": "./app/index.js",
+    "output": {
+        "path": path.join(__dirname, 'build'),
+        "filename": "bundle.js"
     },
-    module: {
-        loaders: [
+    "module": {
+        "loaders": [
             {
-                test: /.jsx?$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
-                query: {
-                    presets: ['es2015', 'react']
-                }
+                "test": /.js?$/,
+                "loader": 'babel-loader',
+                "exclude": /node_modules/
             }
         ]
-    },
+    }
 };
