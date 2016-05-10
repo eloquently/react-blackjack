@@ -173,7 +173,7 @@ The `app.js` file defines what JavaScript should render when we say `<App />`. W
 
 We could have included both the `app.js` file and the `index.js` file in a single file. However, it is generally good practice to keep your components in individual files to organize your code and emphasize that components are meant to be interchangeable and independent.
 
-## Designing our Game Application
+## Planning our Game Application
 
 
 ### Components
@@ -213,3 +213,83 @@ ReactDOM.render(
     document.getElementById('app')
 );
 ```
+
+
+## Setting Up the State
+
+
+### Cards and deck
+
+We need to write some helper functions to set up our state. To keep our code organized, let's do so in a new file in a new directory. Create a new folder inside `app/` called `lib/`. Inside `lib/` create a file called `cards.js`. 
+
+Let's create a `shuffle` method and a method that will create a new deck. I shamelessly stole the `shuffle` method from Stack Overflow [here](http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array-in-javascript). We'll also need a `new_deck` method that will add a new card to the deck for each rank and suit.
+
+```js
+// app/lib/cards.js
+
+export const shuffle = (array) => {
+    let j, x, i;
+    for (i = array.length; i; i -= 1) {
+        j = Math.floor(Math.random() * i);
+        x = array[i - 1];
+        array[i - 1] = array[j];
+        array[j] = x;
+    }
+};
+
+export const new_deck = () => {
+    const ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
+    const suits = ['S', 'C', 'H', 'D'];
+    
+    const deck = [];
+    
+    ranks.forEach( (r) => {
+        suits.forEach( (s) => {
+            deck.push({ "rank": r, "suit": s});
+        });
+    });
+    
+    shuffle(deck);
+    
+    return deck;
+};
+```
+
+In the new deck method, we refer to `deck` as a `const` because it is a constant reference to an array. This means that the array itself may change, but the pointer to the array that we are storing in `deck` is not allowed to change.
+
+```js
+const arr = [];
+arr.push(1); // This is fine because it mutates an existing array
+arr = [1, 2, 3]; // This will break because it replaces the existing array
+```
+
+Now we'll import the `new_deck` method into our `index.js` file, and create a new deck.
+
+```js
+// app/index.js
+
+import { new_deck } from './lib/cards.js';
+
+const deck = new_deck();
+console.log(deck);
+```
+
+If you open the page in your browser and open the javascript console (`ctrl` + `shift` + `j` on Windows), you should see an array of Objects. You can click on them to ensure that they have a suit and rank.
+
+We are currently storing `deck` in a mutable array. Let's install Immutable.js and store it in an immutable `List` instead.
+
+```js
+npm install --save immutable
+```
+
+Immutable.js provides us with a `fromJS` method that allows us to convert JavaScript objects and arrays into immutable `Map`s and `List`s. We can use that method now on our `deck`:
+
+```js
+// app/index.js
+
+const deck = fromJS(new_deck());
+console.log(deck);
+```
+
+Since we're dealing with Immutable.js objects rather than native JavaScript objects, it's hard to view them in the console. To fix that, I installed a [chrome extension](https://chrome.google.com/webstore/detail/immutablejs-object-format/hgldghadipiblonfkkicmgcbbijnpeog) that gives a custom formatter for Immutable.js objects. After you install it, you may need to close the developer tools console and refresh the page. You will also need to enable custom formatters in the developer tools options (access this by pressing `F1` after clicking on the developer tools console).
+
