@@ -1,4 +1,4 @@
-We're going to implement a blackjack game using React.js and Redux.
+We're going to create a blackjack game using React.js and Redux.
 
 # Setting up the project
 
@@ -48,7 +48,15 @@ This downloaded the `react` library (and the libraries it depends on) into the `
 
 If you were to move your code to another computer (or directory) and ran `npm install`, `npm` would install all the dependencies in your `package.json` file (in our case, just `react`). The caret (`^`) before the version number tells `npm` to install the latest version of `react` that is less than `16.0.0`.
 
-## Webpack
+We'll also need the `react-dom` package.
+
+[comment]: <> (Needs description of react-dom)
+
+```bash
+npm install --save react-dom
+```
+
+## Webpack and Babel
 
 We are going to use `webpack` to compile all of our dependencies into a single `.js` file.
 
@@ -60,4 +68,97 @@ Let's install `webpack`. `webpack` is only used to prepare our application for p
 npm install --save-dev webpack
 ```
 
+Now we need to find the binary created by `npm`. On my system (a Cloud9 workspace), it is in the `node_modules/.bin/` directory. To run `webpack`, use `node_modules/.bin/webpack`.
 
+<aside>Other tutorials and guides may install `webpack` globally using the `-g` flag. This allows `webpack` to be run with `webpack` rather than `node_modules/.bin/webpack` on the command line. We prefer not to use global packages where possible to avoid dependency issues.</aside>
+
+We also will need `babel` in order to use ES6. Specifically, we want `webpack` to run `babel` which will "transpile" our ES6 to a version of JavaScript supported by browsers.
+
+The first step is to install the necessary `babel` packages as development dependencies:
+
+```bash
+npm install --save-dev  babel-loader babel-core babel-preset-es2015 babel-preset-react
+```
+
+Now let's create a `webpack` config file to tell it which files to read and write. Our config file will also tell `webpack` to use Babel.
+
+```js
+// webpack.config.js
+
+const path = require('path');
+
+module.exports = {
+    entry: "./app/index.js",
+    output: {
+        path: path.join(__dirname, 'build'),
+        filename: "bundle.js"
+    },
+    module: {
+        loaders: [
+            {
+                test: /.jsx?$/,
+                loader: 'babel-loader',
+                exclude: /node_modules/,
+                query: {
+                    presets: ['es2015', 'react']
+                }
+            }
+        ]
+    },
+};
+```
+
+## A First Build
+
+Let's do the first build of our application. We're going to need a few more directories and files.
+
+First, let's make an HTML file that will serve our application:
+
+```html
+<!-- build/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>React Blackjack</title>
+    </head>
+    <body>
+        <div id="app"></div>
+
+        <script src="./bundle.js"></script>
+    </body>
+</html>
+```
+
+Now, let's make a JavaScript file that inserts our component into the document.
+
+```js
+// app/index.js
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/app.js';
+
+ReactDOM.render(
+    <App />,
+    document.getElementById('app')
+);
+```
+
+Finally, we need the code for our component:
+
+```js
+// app/components/app.js
+
+import React from 'react';
+
+export default class App extends React.Component {
+    render() {
+        return (
+            <h1>Hello, world!</h1>
+        );
+    }
+};
+```
+
+Now if we run `node_modules/.bin/webpack`, we should see a `bundle.js` file created in the `build/` directory. If we view the `build/index.html` page in a browser, we should see "Hello, world!".
