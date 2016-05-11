@@ -7,16 +7,18 @@ import { fromJS } from 'immutable';
 
 import { newDeck, deal } from './lib/cards.js';
 
-let deck = newDeck();
-let player_hand, dealer_hand;
+require('./css/main.scss');
 
-[deck, player_hand] = deal(deck, 2);
-[deck, dealer_hand] = deal(deck, 2);
+let deck = newDeck();
+let playerHand, dealerHand;
+
+[deck, playerHand] = deal(deck, 2);
+[deck, dealerHand] = deal(deck, 2);
 
 const state = fromJS({
     deck,
-    player_hand,
-    dealer_hand,
+    playerHand,
+    dealerHand,
     "winCount": 0,
     "lossCount": 0,
     hasStood: false

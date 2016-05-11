@@ -324,17 +324,17 @@ let deck = fromJS(newDeck());
 console.log("start deck:");
 console.log(deck);
 
-let player_hand = deck.takeLast(2);
+let playerHand = deck.takeLast(2);
 deck = deck.skipLast(2);
-let dealer_hand = deck.takeLast(2);
+let dealerHand = deck.takeLast(2);
 deck = deck.skipLast(2);
 
 console.log("end deck:");
 console.log(deck);
-console.log("player_hand:");
-console.log(player_hand);
-console.log("dealer_hand:");
-console.log(dealer_hand);
+console.log("playerHand:");
+console.log(playerHand);
+console.log("dealerHand:");
+console.log(dealerHand);
 ```
 
 Now if you refresh the page and look at the console, you should see that the player and the dealer each have two cards and the deck starts with 52 cards and ends up with 48 cards.
@@ -536,10 +536,10 @@ import App from './components/app.js';
 import { newDeck, deal } from './lib/cards.js';
 
 let deck = fromJS(newDeck());
-let player_hand, dealer_hand;
+let playerHand, dealerHand;
 
-[deck, player_hand] = deal(deck, 2);
-[deck, dealer_hand] = deal(deck, 2);
+[deck, playerHand] = deal(deck, 2);
+[deck, dealerHand] = deal(deck, 2);
 
 ReactDOM.render(
     <App />,
@@ -565,8 +565,8 @@ import { newDeck, deal } from './lib/cards.js';
 
 const state = fromJS({
     deck,
-    player_hand,
-    dealer_hand,
+    playerHand,
+    dealerHand,
     "winCount": 0,
     "lossCount": 0,
     hasStood: false
@@ -602,9 +602,9 @@ Now that we are passing our components some data, we can start thinking about wh
 
 One way to design a React front-end is to start with a basic sketch of the entire view, and try to break it down into components. This process can be more of an art than a science, and there is not always a correct way to do this. Generally if you see the same type of element repeated multiple times, that element should be a component.
 
-For our application, we will have an `App` component that contains everything else. The `App` component will contain an `Info` component at the top that displays the player's record, the player's current score, and buttons that allow the player to "hit" (draw another card) or "stand" (stop drawing cards). The `App` component will also contain two `Hand` components that show several `Card` components. One of these will represent the player's hand and the other will represent the dealer's hand.
+For our application, we will have an `App` component that contains everything else. The `App` component will contain an `Info` component at the top that displays the player's record and buttons that allow the player to "hit" (draw another card) or "stand" (stop drawing cards). The `App` component will also contain two `Hand` components that show several `Card` components. One of these will represent the player's hand and the other will represent the dealer's hand.
 
-## The App Component
+## The `App` Component
 
 The App component is very simple. It will just render the `Info` and `Hand` components as described above.
 
@@ -703,11 +703,26 @@ Next, we want our `App` component to pass some state variables to the `Info` com
 // test/components/app_spec.js
 
 // ...
-import { Map } from 'immutable';
+import { fromJS } from 'immutable';
 
 // ...
 
-const state = new Map( { winCount: 0, lossCount: 0, hasStood: false } );
+import { newDeck, deal } from '../../app/lib/cards.js';
+
+let deck = newDeck();
+let playerHand, dealerHand;
+
+[deck, playerHand] = deal(deck, 2);
+[deck, dealerHand] = deal(deck, 2);
+
+const state = fromJS({
+    deck,
+    playerHand,
+    dealerHand,
+    "winCount": 0,
+    "lossCount": 0,
+    hasStood: false
+}); 
 
 describe('<App />', () => {
     const rendered = shallow(<App state={state} />);
@@ -715,11 +730,467 @@ describe('<App />', () => {
     // ...
     
     it('passes props to <Info />', () => {
-        expect(rendered.find('Info').first()).to.have.prop('winCount');
-        expect(rendered.find('Info').first()).to.have.prop('lossCount');
-        expect(rendered.find('Info').first()).to.have.prop('hasStood');
+        expect(rendered.find('Info').first()).to.have.prop('winCount', state.get('winCount'));
+        expect(rendered.find('Info').first()).to.have.prop('lossCount', state.get('lossCount'));
+        expect(rendered.find('Info').first()).to.have.prop('hasStood', state.get('hasStood'));
     });
 });
 ```
 
 To write this test, we needed to create a state `Map`, just like we did in `index.js`. This is a bit repetitive, but it is okay for now. Once we start using Redux to handle state, we'll DRY this up.
+
+We also want our `App` component to render two `Hand` components -- one for the player's hand and one for the dealer's hand. Let's make a test for this:
+
+```jsx
+// test/components/app_spec.js
+
+// ...
+
+describe('<App />', () => {
+
+    // ...
+    
+    it('renders two <Hand /> component', () => {
+        expect(rendered.find('Hand')).to.have.length(2);
+    });
+});
+```
+
+Let's make a dummy `Hand` component:
+
+```jsx
+// app/components/hand.js
+
+import React from 'react';
+
+export default class Hand extends React.Component {
+    render() {
+        return (
+            <p>This is a hand component</p>
+        );
+    }
+};
+```
+
+Now the test will pass if we render two `Hand`s in the `App` component:
+
+```jsx
+// app/components/app.js
+
+import React from 'react';
+import Info from './info';
+import Hand from './hand';
+
+export default class App extends React.Component {
+    render() {
+        console.log(this.props);
+        return (
+            <div className="app">
+                <h1>React Blackjack</h1>
+                <Info   winCount={this.props.state.get('winCount')}
+                        lossCount={this.props.state.get('lossCount')}
+                        hasStood={this.props.state.get('hasStood')} />
+                
+                <Hand />
+                <Hand />
+            </div>
+        );
+    }
+};
+```
+
+We also want the `App` component to pass the cards for each `Hand` as a prop:
+
+```jsx
+// test/components/app_spec.js
+
+// ...
+
+describe('<App />', () => {
+    
+    // ...
+    
+    it('passes props to <Hand />s', () => {
+        expect(rendered.find('Hand').first()).to.have.prop('cards', state.get("playerHand"));
+        expect(rendered.find('Hand').last()).to.have.prop('cards', state.get("dealerHand"));
+    });
+});
+```
+
+Adding the appropriate props to the rendered `Hand` components inside `App` will pass the test:
+
+```jsx
+// app/components/app.js
+
+// ...
+
+export default class App extends React.Component {
+    render() {
+        return (
+            <div className="app">
+                
+                // ...
+                
+                <Hand cards={this.props.state.get('playerHand')} />
+                <Hand cards={this.props.state.get('dealerHand')} />
+            </div>
+        );
+    }
+};
+```
+
+Now our app component is doing everything it needs to do. Let's start working on the other components.
+
+## The `Info` Component
+
+As stated above, the info component is responsible for a couple things: displaying the win/loss record of the player and some buttons that allow the player to choose to "hit" or "stand".
+
+Let's first write a test to check if the player's record is displayed correctly:
+
+```jsx
+// test/components/info_spec.js
+
+import React from 'react';
+import { expect } from 'chai';
+import { shallow } from 'enzyme';
+
+import Info from '../../app/components/info';
+
+describe('<Info />', () => {
+    const rendered = shallow(<Info winCount={1} lossCount={2} hasStood={false} />);
+    
+    it('displays record', () => {
+        expect(rendered).to.include.text("Wins: 1");
+        expect(rendered).to.include.text("Losses: 2");
+    });
+}); 
+```
+
+To make the test pass, this is what our `Info` component should look like:
+
+```jsx
+// app/components/info.js
+
+import React from 'react';
+
+export default class Info extends React.Component {
+    render() {
+        return (
+            <div id="info_bar">
+                <span id="player_record">
+                    Wins: {this.props.winCount} Losses: {this.props.lossCount}
+                </span>
+            </div>
+        );
+    }
+};
+```
+
+Next, we want to display two buttons -- one with the text "Hit" and one with the text "Stand":
+
+```jsx
+// test/components/info_spec.js
+
+// ...
+
+describe('<Info />', () => {
+    // ...
+    
+    it('shows hit and stand buttons', () => {
+        const buttons = rendered.find('button');
+        expect(buttons).to.have.length(2);
+        expect(buttons.first()).to.have.text('Hit');
+        expect(buttons.last()).to.have.text('Stand');
+    });
+});
+```
+
+Now, we'll add the buttons to our component:
+
+```jsx
+// app/components/info.js
+
+// ...
+
+export default class Info extends React.Component {
+    render() {
+        return (
+            <div id="info_bar">
+                // ...
+                <span id="buttons">
+                    <button>Hit</button>
+                    <button>Stand</button>
+                </span>
+            </div>
+        );
+    }
+};
+```
+
+We want one more behavior from the `Info` component. When `hasStood` is true, the hit and stand buttons should be disabled. Let's refactor our test to account for the two different possible contexts:
+
+```jsx
+// test/components/info_spec.js
+
+//... 
+
+describe('<Info />', () => {
+    describe('when hasStood is false', () => {
+        const rendered = shallow(<Info winCount={1} lossCount={2} hasStood={false} />);
+    
+        it('displays record', () => {
+            expect(rendered).to.include.text("Wins: 1");
+            expect(rendered).to.include.text("Losses: 2");
+        });
+        
+        const buttons = rendered.find('button');
+        it('shows hit and stand buttons', () => {
+            expect(buttons).to.have.length(2);
+            expect(buttons.first()).to.have.text('Hit');
+            expect(buttons.last()).to.have.text('Stand');
+        });
+        
+        it('enables hit and stand buttons', () => {
+            buttons.forEach((b) => {
+                expect(b).to.not.have.attr('disabled');
+            });
+        });
+    });
+    
+    describe('when hasStood is true', () => {
+        const rendered = shallow(<Info winCount={1} lossCount={2} hasStood={true} />);
+        
+        it('disables hit and stand buttons', () => {
+            const buttons = rendered.find('button');
+            buttons.forEach((b) => {
+                expect(b).to.have.attr('disabled');
+            });
+        });
+    });
+    
+}); 
+```
+
+That's all we need for our `Info` component for now. We'll make the buttons actually do something after we set up the `Hand` component.
+
+## The `Hand` and `Card` Components
+
+The `Hand` component has a `List` of cards as a property and is responsible for displaying the cards in that list. We're going to create a Card component, so the first thing we want `Hand` to do is display the correct number of cards and give each one the correct props:
+
+```jsx
+// test/components/hand_spec.js
+
+import React from 'react';
+import { expect } from 'chai';
+import { shallow } from 'enzyme';
+
+import Hand from '../../app/components/hand';
+
+import { newDeck, deal } from '../../app/lib/cards.js';
+
+let deck = newDeck();
+let hand;
+
+const n = 2;
+[deck, hand] = deal(deck, n);
+
+describe('<Hand />', () => {
+    const rendered = shallow(<Hand cards={hand} />);
+    
+    it('renders correct number of cards', () => {
+        expect(rendered.find('Card')).to.have.length(n);
+    });
+    
+    it('gives each card the correct props', () => {
+        hand.forEach((card, i) => {
+            expect(cards.at(i)).to.have.prop('suit', card.get('suit'));
+            expect(cards.at(i)).to.have.prop('rank', card.get('rank'));
+        });
+    });
+});
+```
+
+Now let's make a dummy `Card` class:
+
+```jsx
+// app/components/card.js
+
+import React from 'react';
+
+export default class Card extends React.Component {
+    render() {
+        return (
+            <div className="card">
+                Card
+            </div>
+        );
+    }
+}
+```
+
+Then we'll render these cards from our `Hand` component.
+
+```jsx
+// app/components/hand.js
+
+import React from 'react';
+import Card from './card';
+
+export default class Hand extends React.Component {
+    render() {
+        return (
+            <div className="hand">
+                {this.props.cards.map((card, i) =>
+                    <Card suit={card.get('suit')}
+                          rank={card.get('rank')}
+                          key={i} />
+                )}
+            </div>
+        );
+    }
+};
+```
+
+This render method is a little more complicated than our previous ones, so let's break it down. `this.props.cards` is a `List` object that contains a `Map` for each card. We want to render a `Card` element for each of those `Maps`. To do this, we invoke the `map()` method on `this.props.cards`. The `map()` method returns an array that is the result of applying the function passed to `map()` as a parameter. In this case, we get an array of `<Card>`s with a `card` prop that corresponds to the respective element in the original array.
+
+We need to give each element a unique `key` attribute that React will use to distinguish the elements. In this case, we can just use the position of the element in the array (`i`), but in other cases the choice of `key` may be more complicated.
+
+[comment]: <> (Above paragraphs could use some work)
+
+Now it's time to flesh out our `Card` component. We want each `Card` to display its `suit` and `rank`. The test for this will be fairly simple:
+
+```jsx
+// test/components/card_spec.js
+
+import React from 'react';
+import { expect } from 'chai';
+import { shallow } from 'enzyme';
+import { fromJS } from 'immutable';
+
+import Card from '../../app/components/card';
+
+const suit = 'C';
+const rank = 2;
+
+describe('<Card />', () => { 
+    const rendered = shallow(<Card suit={suit} rank={rank}/>);
+    
+    it('shows suit and rank', () => {
+        expect(rendered).to.include.text(suit);
+        expect(rendered).to.include.text(rank);
+    });
+});
+```
+
+Now let's change our `Card` component so that the test will pass:
+
+```jsx
+// app/components/card.js
+
+import React from 'react';
+
+export default class Card extends React.Component {
+    render() {
+        return (
+            <div className="card">
+                <div className="top-rank">
+                    {this.props.rank}
+                </div>
+                <div className="suit">
+                    {this.props.suit}
+                </div>
+                <div className="bottom-rank">
+                    {this.props.rank}
+                </div>
+            </div>
+        );
+    }
+}
+```
+
+Our tests pass, but if we look at our application in the browser, it is not very user friendly. Let's use SASS to create some css to make our cards look more like cards.
+
+First we need to configure `webpack` to compile our `.scss` files to `.sass`. Previously, we set up `babel` to transform our ES6 `.js` files. We are going to do something similar for our (not yet created) `.scss` files. First let's install `sass-loader` and `node-sass`:
+
+```bash
+npm install --save-dev style-loader css-loader sass-loader node-sass
+```
+
+We'll use `sass-loader` in our `webpack.config.js` file, but `node-sass` will actually do the compilation work. 
+
+Next, we need to put this loader into our configuration file:
+
+```js
+// webpack.config.js
+
+// ...
+
+module.exports = {
+    // ...
+    devtool: "source-map",
+    "module": {
+        "loaders": [
+            {
+                "test": /.js?$/,
+                "loader": 'babel-loader',
+                "exclude": /node_modules/
+            },
+            {
+                "test": /\.scss$/,
+                "loaders": ["style", "css?sourceMap", "sass?sourceMap"]
+            } 
+        ]
+    }
+};
+```
+
+Now, `webpack` will build our `.scss` files. We've also turned on "source maps", which tell the inspect tool on our browsers which `.scss` file each style comes from. Source maps can slow down build times if you have a large application, but they make debugging much easier.
+
+Now we can start making stylesheet files. We'll have a `main.scss` file that is only responsible for importing all of the other `.scss` files in our application.
+
+```scss
+/* app/css/main.scss */
+
+@import 'components/all';
+```
+
+Next we'll make a directory called `components/` for our component styles inside our `css/` directory. It is a good practice to keep each component's stylesheet in its own file in order to make your components more modular. If we wanted to make another card game application, we could very easily re-use our card component by copying the `components/card.js` file and the `css/components/card.js` file to a new project.
+
+The `components/` directory will have a file called `_all.scss` that imports each component. It's important to remember to add an import statement to this file each time you create a new `.scss` file.
+
+The `_all.scss` file looks like this:
+
+```scss
+/* app/css/components/_all.scss */
+
+@import 'card';
+```
+
+And now we can create a `card.scss` file:
+
+```scss
+.card {
+    background-color: blanchedalmond;
+    /* Yes -- blanchedalmond is a real color name */
+}
+```
+
+Finally, we need to import our css file into `index.js` so that `webpack` can find it and include it in our bundle:
+
+```js
+// app/index.js
+
+// ...
+
+import { newDeck, deal } from './lib/cards.js';
+
+require('./css/main.scss');
+
+let deck = newDeck();
+// ...
+```
+
+Now if you open `build/index.html` in the browser, you should see the a nice blanced almond color behind your cards! You may have to restart your `webpack:watch` process because we changed its configuration.
+
+In Chrome, if you right click on a card and hit "inspect", you'll see the DOM tree appear. If you select one of the `<div class="hand">` lines, you should see a list of styles applied to the element. It will tell you that it's getting it's `blanchedalmond` `backround-color` from `card.scss`. This is the source map at work!
+

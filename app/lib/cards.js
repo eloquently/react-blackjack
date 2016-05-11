@@ -29,7 +29,7 @@ export const newDeck = () => {
     return fromJS(deck);
 };
 
-// deal n cards from the end of List deck
+// deal n cards from the end of deck List
 export const deal = (deck, n) => {
     let dealt_cards = deck.takeLast(n);
     let newDeck = deck.skipLast(n);
