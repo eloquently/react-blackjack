@@ -197,18 +197,9 @@ The `app.js` file defines what JavaScript should render when we say `<App />`. W
 
 We could have included both the `app.js` file and the `index.js` file in a single file. However, it is generally good practice to keep your components in individual files to organize your code and emphasize that components are meant to be interchangeable and independent.
 
-## Planning our Game Application
+## Mapping out State
 
-
-### Components
-
-One way to design a React front-end is to start with a basic sketch of the entire view, and try to break it down into components. This process can be more of an art than a science, and there is not always a correct way to do this. Generally if you see the same type of element repeated multiple times, that element should be a component.
-
-For our application, we will have an `App` component that contains everything else. The `App` component will contain an `Info` component at the top that displays the player's record, the player's current score, and buttons that allow the player to "hit" (draw another card) or "stand" (stop drawing cards). The `App` component will also contain two `Hand` components that show several `Card` components. One of these will represent the player's hand and the other will represent the dealer's hand.
-
-### State
-
-We will be using `redux` to manage our application's data. `redux` requires us to use a single variable as state. For this application, we'll be using a `Map` from the `Immutable.js` package. A `Map` is analgous to a `Hash` in Ruby or a JavaScript object except it is immutable. That means that every time you want to change a `Map` you will need to make a copy of it and change the copy while leaving the original `Map` alone.
+We will be using `redux` to manage our application's state. `redux` requires us to use a single variable to contain all state data. For this application, we'll be using a `Map` from the `Immutable.js` package. A `Map` is analgous to a `Hash` in Ruby or a JavaScript object except it is immutable. That means that every time you want to change a `Map` you will need to make a copy of it and change the copy while leaving the original `Map` alone.
 
 <aside style="background-color:lightblue; margin-bottom: 16px;">It's perfectly fine to use a JavaScript object or any other data structure as a way to keep track of the application's state as long as you are careful not to mutate the state object. We eliminate this concern by using an immutable `Map`.</aside>
 
@@ -402,10 +393,17 @@ module.exports = {
 
 To keep our test code DRY, we are going to want a test helper file that requires all the libraries we will need for testing. Create a folder for tests `test/` and create a `test_helper.js` file inside.
 
-We are going to import `chai` and a library called `chai-immutable` that makes it easy for us to test Immutable.js objects.
+We are going to import `chai` and a library called `chai-immutable` that makes it easy for us to test Immutable.js objects. First, we'll get the package from npm:
+
+```bash
+npm install --save-dev chai-immutable
+```
+
+Now we'll add it to our `test_helper.js`:
 
 ```js
 // test/test_helper.js
+
 import chai from 'chai';
 import chaiImmutable from 'chai-immutable';
 
@@ -569,8 +567,8 @@ const state = fromJS({
     deck,
     player_hand,
     dealer_hand,
-    "win_count": 0,
-    "loss_count": 0,
+    "winCount": 0,
+    "lossCount": 0,
     hasStood: false
 });
 
@@ -596,3 +594,132 @@ ReactDOM.render(
 
 We use the curly braces around `{state}` to indicate to React that it should substitute a variable called `state` for `{state}`.
 
+## A First Pass at Components
+
+Now that we are passing our components some data, we can start thinking about what our components should look like.
+
+### Component Design
+
+One way to design a React front-end is to start with a basic sketch of the entire view, and try to break it down into components. This process can be more of an art than a science, and there is not always a correct way to do this. Generally if you see the same type of element repeated multiple times, that element should be a component.
+
+For our application, we will have an `App` component that contains everything else. The `App` component will contain an `Info` component at the top that displays the player's record, the player's current score, and buttons that allow the player to "hit" (draw another card) or "stand" (stop drawing cards). The `App` component will also contain two `Hand` components that show several `Card` components. One of these will represent the player's hand and the other will represent the dealer's hand.
+
+## The App Component
+
+The App component is very simple. It will just render the `Info` and `Hand` components as described above.
+
+We're going to use the Enzyme testing utility to test our React components. Enzyme provides us with some helper functions that make rendering and manipulating React objects easier than trying to use the default tools provided by React. 
+
+First, let's install React's test utilities and Enzyme:
+
+```bash
+npm install --save-dev react-addons-test-utils enzyme chai-enzyme
+```
+
+Next, let's add Enzyme's `chai` assertions to our `test_helper.js`:
+
+```js
+// test/test_helper.js
+
+import chai from 'chai';
+import chaiImmutable from 'chai-immutable';
+import chaiEnzyme from 'chai-enzyme';
+
+chai.use(chaiImmutable);
+chai.use(chaiEnzyme());
+```
+
+We can use Enzyme's `shallow` function to do a shallow render of our component. Shallow rendering will not render any child components. This allows us to keep our test one component at a time. If we are testing the `App` component, we want it to render an `Info` component. If something is wrong with the `Info` component, but it's still being rendered properly, the `App` component test should pass. Keeping our tests independent allows us to identify the source of a bug more quickly.
+
+Shallow rendering can also boost performance as rendering all children and ancestor components can take a relatively long time in a big application.
+
+The `shallow` function returns an object that has some other useful functions. In this test, we will use the `find` function to search for other elements inside the shallow rendering using CSS selectors (`element`, `#id`, `.class`).
+
+Our first task for the `App` component is to make it render one `Info` component:
+
+```jsx
+import React from 'react';
+import { expect } from 'chai';
+import { shallow } from 'enzyme';
+
+import App from '../../app/components/app';
+
+describe('<App />', () => {
+    const rendered = shallow(<App />);
+    
+    it('renders <Info /> component', () => {
+        expect(rendered.find('Info')).to.have.length(1);
+    });
+});
+```
+
+We did the `shallow` render outside of the `it` block because we will be using `rendered` for multiple tests.
+
+To make the test pass, we need to add the `Info` component to the `render` function in our `App` component:
+
+```jsx
+// app/components/app.js
+
+import React from 'react';
+import Info from './info';
+
+export default class App extends React.Component {
+    render() {
+        return (
+            <div className="app">
+                <h1>React Blackjack</h1>
+                <Info />
+            </div>
+        );
+    }
+};
+```
+
+Note that we kept the `h1`. We had to wrap the entire thing in a `div` because a React component can only have one root HTML element. Without the `div`, we would have `h1` and `Info` on the same level, so we would have two root elements.
+
+Another thing to note is that when we give an element a CSS class in `JSX`, we use `className=` rather than `class=` (the normal way to do it in HTML). This is because `JSX` is still JavaScript, and `class` is a reserved word in JavaScript used when declaring a new class.
+
+We'll also need an `Info` component, so we have something to import and render from the `App` component:
+
+```jsx
+// app/components/info.js
+
+import React from 'react';
+
+export default class Info extends React.Component {
+    render() {
+        return (
+            <p>This is the info component</p>
+        );
+    }
+};
+```
+
+Now our test for the `App` component should pass.
+
+Next, we want our `App` component to pass some state variables to the `Info` component as props. Specifically, the `Info` component is going to need to know `winCount`, `lossCount`, and `hasStood`. Our test for this looks like: 
+
+```jsx
+// test/components/app_spec.js
+
+// ...
+import { Map } from 'immutable';
+
+// ...
+
+const state = new Map( { winCount: 0, lossCount: 0, hasStood: false } );
+
+describe('<App />', () => {
+    const rendered = shallow(<App state={state} />);
+    
+    // ...
+    
+    it('passes props to <Info />', () => {
+        expect(rendered.find('Info').first()).to.have.prop('winCount');
+        expect(rendered.find('Info').first()).to.have.prop('lossCount');
+        expect(rendered.find('Info').first()).to.have.prop('hasStood');
+    });
+});
+```
+
+To write this test, we needed to create a state `Map`, just like we did in `index.js`. This is a bit repetitive, but it is okay for now. Once we start using Redux to handle state, we'll DRY this up.

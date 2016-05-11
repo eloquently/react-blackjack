@@ -17,8 +17,8 @@ const state = fromJS({
     deck,
     player_hand,
     dealer_hand,
-    "win_count": 0,
-    "loss_count": 0,
+    "winCount": 0,
+    "lossCount": 0,
     hasStood: false
 });
 
