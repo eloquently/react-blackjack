@@ -1110,6 +1110,10 @@ export default class Card extends React.Component {
 
 Our tests pass, but if we look at our application in the browser, it is not very user friendly. Let's use SASS to create some css to make our cards look more like cards.
 
+## Setting up SASS and Hot Reload
+
+### SASS
+
 First we need to configure `webpack` to compile our `.scss` files to `.sass`. Previously, we set up `babel` to transform our ES6 `.js` files. We are going to do something similar for our (not yet created) `.scss` files. First let's install `sass-loader` and `node-sass`:
 
 ```bash
@@ -1194,3 +1198,101 @@ Now if you open `build/index.html` in the browser, you should see the a nice bla
 
 In Chrome, if you right click on a card and hit "inspect", you'll see the DOM tree appear. If you select one of the `<div class="hand">` lines, you should see a list of styles applied to the element. It will tell you that it's getting it's `blanchedalmond` `backround-color` from `card.scss`. This is the source map at work!
 
+### Hot Reloading/Hot Module Replacement
+
+Another thing worth setting up at this point is "hot reloading". Hot reloading will automatically update the page we're working on in the browser without making us manually refresh. This speeds up the process of checking how changes we make in the code change what the browser renders.
+
+Hot module replacement (HMR) is a is very useful form of hot reloading because, unlike refreshing, it keeps the state of the application intact. This means that if we are working on the message that our application displays when the user wins a game, we don't have to play an entire game of blackjack (and win) each time we make a change to the message. HMR will change the message without resetting the state of the game.
+
+First, we need to get the react-hot-loader package:
+
+```bash
+npm install --save-dev react-hot-loader
+```
+
+Then, we need to make some changes to our `webpack.config.js` file:
+
+```js
+// webpack.config.js
+
+var webpack = require('webpack');
+
+const path = require('path');
+
+module.exports = {
+    "entry": [
+        'webpack-dev-server/client?https://0.0.0.0:8080',
+        'webpack/hot/only-dev-server',
+        './app/index.js'
+    ],
+    "output": {
+        "path": path.join(__dirname, 'build'),
+        "filename": "bundle.js"
+    },
+    devtool: "source-map",
+    "module": {
+        "loaders": [
+            {
+                "test": /.js?$/,
+                "loader": 'react-hot!babel-loader',
+                "exclude": /node_modules/
+            },
+            {
+                "test": /\.scss$/,
+                "loaders": ["style", "css?sourceMap", "sass?sourceMap"]
+            } 
+        ]
+    },
+    devServer: {
+        contentBase: './build',
+        hot: true
+    },
+    plugins: [
+        new webpack.HotModuleReplacementPlugin()
+    ]
+};
+```
+
+This configuration file works on a Cloud9 instance. If you are not on Cloud9, you may have to replace `'webpack-dev-server/client?https://0.0.0.0:8080'` with `'webpack-dev-server/client?http://localhost:8080'` on line 9.
+
+To run our application, we will use `webpack-dev-server` instead of just opening `index.html` in the browser. To install `webpack-dev-server`:
+
+```bash
+npm install --save-dev webpack-dev-server
+```
+
+To run webpack-dev-server, you can type:
+
+```bash
+node_modules/.bin/webpack-dev-server --host $IP --port $PORT
+```
+
+If you are not on Cloud9, you don't need the `--host $IP --port $PORT` part.
+
+To save ourselves some typing, let's add this to `package.json`. Remember to omit the `--host $IP --port $PORT` part if you are not on Cloud9.
+
+```js
+{
+  // ...
+  
+  "scripts": {
+    "webpack": "node_modules/.bin/webpack",
+    "webpack:watch": "npm run webpack -- --watch",
+    "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive",
+    "test:watch": "npm run test -- --watch",
+    "webpack-dev-server": "node_modules/.bin/webpack-dev-server --host 0.0.0.0 --port 8080"
+  },
+  
+  // ...
+}
+```
+
+Now run the following command in bash:
+
+```bash
+npm run webpack-dev-server
+```
+
+If you're on Cloud9, a link should appear to your application. If you're running this locally, you should be able to visit the page by navigating to `localhost:8080` in your browser.
+
+Once you see the application, try changing the `background-color` in `app/css/components/card.scss` (I'd suggest a nice `rosybrown`). When you switch to the browser tab with the application, it should automatically change the background color without requiring you to hit refresh.
