@@ -1,5 +1,60 @@
-/* app/css/components/_all.scss */
+/* app/css/components/card.scss */
 
 .card {
-    background-color: rosybrown;
+    display: inline-block;
+    border: 1px solid black;
+    height: 150px;
+    width: 100px;
+    margin: 10px;
+    position: relative;
+    background-color: ivory;
+    
+    .rank {
+        padding: 5px;
+    }
+    
+    .top-rank {
+        @extend .rank;
+        
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    
+    .bottom-rank {
+        @extend .rank;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+    }
+    
+    .suit {
+        display: none;
+    }
+}
+
+.card.H, .card.D {
+    color: red;
+    border-color: red;
+}
+
+
+.card:after {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 40px;
+}
+
+.card.H:after {
+    content: '\2665';
+}
+.card.D:after {
+    content: '\2666';
+}
+.card.S:after {
+    content: '\2660';
+}
+.card.C:after {
+    content: '\2663';
 }

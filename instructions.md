@@ -831,7 +831,9 @@ export default class App extends React.Component {
                 
                 // ...
                 
+                <strong>Player's hand:</strong>
                 <Hand cards={this.props.state.get('playerHand')} />
+                <strong>Dealer's hand:</strong>
                 <Hand cards={this.props.state.get('dealerHand')} />
             </div>
         );
@@ -1173,6 +1175,8 @@ The `_all.scss` file looks like this:
 And now we can create a `card.scss` file:
 
 ```scss
+/* app/css/components/card.scss */
+
 .card {
     background-color: blanchedalmond;
     /* Yes -- blanchedalmond is a real color name */
@@ -1296,3 +1300,181 @@ npm run webpack-dev-server
 If you're on Cloud9, a link should appear to your application. If you're running this locally, you should be able to visit the page by navigating to `localhost:8080` in your browser.
 
 Once you see the application, try changing the `background-color` in `app/css/components/card.scss` (I'd suggest a nice `rosybrown`). When you switch to the browser tab with the application, it should automatically change the background color without requiring you to hit refresh.
+
+## Card Styles
+
+We're not going to go into much depth with SASS. Feel free to use my stylesheet or tweak it however you want. Here's mine:
+
+```scss
+/* app/css/components/card.scss */
+
+.card {
+    display: inline-block;
+    border: 1px solid black;
+    height: 150px;
+    width: 100px;
+    margin: 10px;
+    position: relative;
+    background-color: ivory;
+    
+    .rank {
+        padding: 5px;
+    }
+    
+    .top-rank {
+        @extend .rank;
+        
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    
+    .bottom-rank {
+        @extend .rank;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+    }
+    
+    .suit {
+        display: none;
+    }
+}
+
+.card.H, .card.D {
+    color: red;
+    border-color: red;
+}
+
+
+.card:after {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 40px;
+}
+
+.card.H:after {
+    content: '\2665';
+}
+.card.D:after {
+    content: '\2666';
+}
+.card.S:after {
+    content: '\2660';
+}
+.card.C:after {
+    content: '\2663';
+}
+```
+
+Notice that as you change this file, your browser reloads the stylesheet without changing the cards. This is hot module replacement at work. 
+
+Let's also put a little bit of styling on the `Info` component. First, we need to change `components/_all.scss`:
+
+```scss
+/* app/css/components/_all.scss */
+
+@import 'card';
+@import 'info';
+```
+
+Then we can create an `info.scss` file and give it some styles. I'm just going to space things out a little bit.
+
+```scss
+/* app/css/components/info.scss */
+
+#info {
+    margin-bottom: 10px;
+    
+    span {
+        margin: 10px;
+    }
+    button {
+        margin: 0 5px;
+    }
+}
+```
+
+Now that our application is looking beautiful (well functional at least), we can move on to implementing some of the game logic.
+
+## The Game
+
+We haven't thought too much about what our application will need to do in order to play a game of blackjack.
+
+One obvious way to make our game look more like blackjack is that the dealer's first card should be face down -- not face up.
+
+There are a number of different ways to implement this feature. One would be to add a boolean `face_down` property to the `Card` objects we create at the very beginning of the program. This is a viable solution, but for this application, I think of `face_down` as more of display logic than an inherent property of a card.
+
+Another solution is to modify our `Hand` component to just display the first card as face down. There are a few drawbacks here. Sometimes, the `Hand` will need to display the dealer's first card face up, such as when the player chooses "stand" and the dealer starts drawing. This means that our `Hand` component needs to know the `hasStood` state variable. `Hand` also needs to know whether it is the dealer's hand or the player's hand. It's typically a good strategy to limit the number of props being passed into a component. This approach makes our `Hand` component less modular -- it would be harder to use `Hand` in another card game. 
+
+Another drawback to both of these approaches is that we are deciding what the card will be before it is shown to the user. Displaying the card face down is just a cosmetic change -- the card's suit and rank are still in the application state. Since we are building a front-end application, the state tree is in the browser, and thus it is available to the user.
+
+The way we will solve this is to set up our `Hand` components to take a dummy card that it will display as a face down card. The dummy card won't come from the deck and won't have a suit or rank. After the player stands, we'll deal an extra card to the dealer and remove the dummy card.
+
+This logic suggests something else about our `deal` function: since the `Deck` object we're playing with is stored in state, the player can tell which card will be dealt next. This ruins the game. Let's fix this first.
+
+### Refactoring the `deal` Function
+
+Let's first add a test for our deal function. If we deal 1 card from the same deck 10 times, they shouldn't all be the same card. This new test will replace the `'puts correct cards in hand'` test.
+
+```js
+// test/lib/cards_spec.js
+
+// ...
+
+describe('cards.js', () => {
+   
+    // ...
+    
+    describe('deal', () => {
+        // ...
+        it('returns hand of n cards', () => {
+            expect(new_hand.size).to.eq(n);
+        });
+        
+        it('does not deal same card each time', () => {
+            const cards = [];
+            for(let i = 0; i < 10; i += 1) {
+                cards.push(deal(deck, 1)[1].first()); 
+            }
+            const all_same = cards.reduce( (prev, curr) => prev && (cards[0] === curr), true );
+            expect(all_same).to.eq(false);
+        });
+    });
+});
+```
+
+Now we'll change the `deal` function:
+
+```js
+// app/lib/cards.js
+
+import { fromJS, List } from 'immutable';
+
+// ...
+
+// deal n cards from random position in deck
+export const deal = (deck, n) => {
+    if(n == 1) {
+        const r = Math.floor(Math.random() * deck.size);
+        let dealtCards = new List([deck.get(r)]);
+        let newDeck = deck.remove(r);
+        return [newDeck, dealtCards]
+    }
+    
+    let dealtCards = new List();
+    let newDeck = deck;
+    for(let i = 0; i < n; i += 1) {
+        let [d, c] = deal(newDeck, 1);
+        dealtCards = dealtCards.push(c.first());
+        newDeck = d;
+    }
+    return [newDeck, dealtCards];
+};
+```
+
+Your test should pass now. Since we are randomly choosing cards from the deck, there is a `1/(52^9)` chance that they will all be the same. This means that once out of every `2.8 * 10^15` times you run your test, it will fail. I think we can live with those odds!
+
+### Dummy Cards
+

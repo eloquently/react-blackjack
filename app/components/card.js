@@ -5,7 +5,7 @@ import React from 'react';
 export default class Card extends React.Component {
     render() {
         return (
-            <div className="card">
+            <div className={`card ${this.props.suit}`}>
                 <div className="top-rank">
                     {this.props.rank}
                 </div>

@@ -12,8 +12,9 @@ export default class App extends React.Component {
                 <Info   winCount={this.props.state.get('winCount')}
                         lossCount={this.props.state.get('lossCount')}
                         hasStood={this.props.state.get('hasStood')} />
-                
+                <strong>Player's hand:</strong>
                 <Hand cards={this.props.state.get('playerHand')} />
+                <strong>Dealer's hand:</strong>
                 <Hand cards={this.props.state.get('dealerHand')} />
             </div>
         );

@@ -1,6 +1,6 @@
 // app/lib/cards.js
 
-import { fromJS } from 'immutable';
+import { fromJS, List } from 'immutable';
 
 export const shuffle = (array) => {
     let j, x, i;
@@ -29,9 +29,21 @@ export const newDeck = () => {
     return fromJS(deck);
 };
 
-// deal n cards from the end of deck List
+// deal n cards from random position in deck
 export const deal = (deck, n) => {
-    let dealt_cards = deck.takeLast(n);
-    let newDeck = deck.skipLast(n);
-    return [newDeck, dealt_cards];
+    if(n == 1) {
+        const r = Math.floor(Math.random() * deck.size);
+        let dealtCards = new List([deck.get(r)]);
+        let newDeck = deck.remove(r);
+        return [newDeck, dealtCards]
+    }
+    
+    let dealtCards = new List();
+    let newDeck = deck;
+    for(let i = 0; i < n; i += 1) {
+        let [d, c] = deal(newDeck, 1);
+        dealtCards = dealtCards.push(c.first());
+        newDeck = d;
+    }
+    return [newDeck, dealtCards];
 };
