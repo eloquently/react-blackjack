@@ -48,7 +48,6 @@
 
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); // app/index.js
 
-
 	var _react = __webpack_require__(1);
 
 	var _react2 = _interopRequireDefault(_react);
@@ -61,16 +60,13 @@
 
 	var _app2 = _interopRequireDefault(_app);
 
-	var _cards = __webpack_require__(169);
+	var _immutable = __webpack_require__(169);
 
-	var _immutable = __webpack_require__(170);
+	var _cards = __webpack_require__(170);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var deck = (0, _immutable.fromJS)((0, _cards.newDeck)());
-	console.log("start deck:");
-	console.log(deck);
-
+	var deck = (0, _cards.newDeck)();
 	var player_hand = void 0,
 	    dealer_hand = void 0;
 
@@ -89,14 +85,18 @@
 	dealer_hand = _deal4[1];
 
 
-	console.log("end deck:");
-	console.log(deck);
-	console.log("player_hand:");
-	console.log(player_hand);
-	console.log("dealer_hand:");
-	console.log(dealer_hand);
+	var state = (0, _immutable.fromJS)({
+	    deck: deck,
+	    player_hand: player_hand,
+	    dealer_hand: dealer_hand,
+	    "win_count": 0,
+	    "loss_count": 0,
+	    hasStood: false
+	});
 
-	_reactDom2.default.render(_react2.default.createElement(_app2.default, null), document.getElementById('app'));
+	console.log(state);
+
+	_reactDom2.default.render(_react2.default.createElement(_app2.default, { state: state }), document.getElementById('app'));
 
 /***/ },
 /* 1 */
@@ -20243,55 +20243,6 @@
 /* 169 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.deal = exports.newDeck = exports.shuffle = undefined;
-
-	var _immutable = __webpack_require__(170);
-
-	var shuffle = exports.shuffle = function shuffle(array) {
-	    var j = void 0,
-	        x = void 0,
-	        i = void 0;
-	    for (i = array.length; i; i -= 1) {
-	        j = Math.floor(Math.random() * i);
-	        x = array[i - 1];
-	        array[i - 1] = array[j];
-	        array[j] = x;
-	    }
-	}; // app/lib/cards.js
-
-	var newDeck = exports.newDeck = function newDeck() {
-	    var ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
-	    var suits = ['S', 'C', 'H', 'D'];
-
-	    var deck = [];
-
-	    ranks.forEach(function (r) {
-	        suits.forEach(function (s) {
-	            deck.push({ "rank": r, "suit": s });
-	        });
-	    });
-
-	    shuffle(deck);
-
-	    return (0, _immutable.fromJS)(deck);
-	};
-
-	// deal n cards from the end of List deck
-	var deal = exports.deal = function deal(deck, n) {
-	    var dealt_cards = deck.takeLast(2);
-	    var newDeck = deck.skipLast(2);
-	    return [newDeck, dealt_cards];
-	};
-
-/***/ },
-/* 170 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/**
 	 *  Copyright (c) 2014-2015, Facebook, Inc.
 	 *  All rights reserved.
@@ -25271,6 +25222,55 @@
 	  return Immutable;
 
 	}));
+
+/***/ },
+/* 170 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.deal = exports.newDeck = exports.shuffle = undefined;
+
+	var _immutable = __webpack_require__(169);
+
+	var shuffle = exports.shuffle = function shuffle(array) {
+	    var j = void 0,
+	        x = void 0,
+	        i = void 0;
+	    for (i = array.length; i; i -= 1) {
+	        j = Math.floor(Math.random() * i);
+	        x = array[i - 1];
+	        array[i - 1] = array[j];
+	        array[j] = x;
+	    }
+	}; // app/lib/cards.js
+
+	var newDeck = exports.newDeck = function newDeck() {
+	    var ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
+	    var suits = ['S', 'C', 'H', 'D'];
+
+	    var deck = [];
+
+	    ranks.forEach(function (r) {
+	        suits.forEach(function (s) {
+	            deck.push({ "rank": r, "suit": s });
+	        });
+	    });
+
+	    shuffle(deck);
+
+	    return (0, _immutable.fromJS)(deck);
+	};
+
+	// deal n cards from the end of List deck
+	var deal = exports.deal = function deal(deck, n) {
+	    var dealt_cards = deck.takeLast(n);
+	    var newDeck = deck.skipLast(n);
+	    return [newDeck, dealt_cards];
+	};
 
 /***/ }
 /******/ ]);

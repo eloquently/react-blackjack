@@ -1,28 +1,30 @@
 // app/index.js
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './components/app.js';
-
-import { newDeck, deal } from './lib/cards.js';
 import { fromJS } from 'immutable';
 
-let deck = fromJS(newDeck());
-console.log("start deck:");
-console.log(deck);
+import { newDeck, deal } from './lib/cards.js';
 
+let deck = newDeck();
 let player_hand, dealer_hand;
 
 [deck, player_hand] = deal(deck, 2);
 [deck, dealer_hand] = deal(deck, 2);
 
-console.log("end deck:");
-console.log(deck);
-console.log("player_hand:");
-console.log(player_hand);
-console.log("dealer_hand:");
-console.log(dealer_hand);
+const state = fromJS({
+    deck,
+    player_hand,
+    dealer_hand,
+    "win_count": 0,
+    "loss_count": 0,
+    hasStood: false
+});
+
+console.log(state);
 
 ReactDOM.render(
-    <App />,
+    <App state={state} />,
     document.getElementById('app')
 );

@@ -251,6 +251,8 @@ Let's create a `shuffle` method and a method that will create a new deck. I sham
 ```js
 // app/lib/cards.js
 
+import { fromJS } from 'immutable';
+
 export const shuffle = (array) => {
     let j, x, i;
     for (i = array.length; i; i -= 1) {
@@ -275,7 +277,7 @@ export const newDeck = () => {
     
     shuffle(deck);
     
-    return deck;
+    return fromJS(deck);
 };
 ```
 
@@ -433,7 +435,7 @@ Now let's write some tests for the `cards.js` file that we had previously been t
 import { expect } from 'chai';
 import { List } from 'immutable';
 
-import { newDeck, deal } from '../../app/lib/cards';
+import { newDeck } from '../../app/lib/cards';
 
 describe('cards.js', () => {
     describe('newDeck', () => {
@@ -462,14 +464,19 @@ You can read our tests like this:
     - It has 52 elements
         - Specifically, we expect the size of `newDeck()` to equal 52
 
+If you save the file and run the tests, they should pass because we've already added the `newDeck` mehod to `cards.js`.
 
-
-We also want some tests for the `deal` method. One thing to note about these tests is that we only run the `newDeck` function once inside the `deal` `describe` block. This makes our code more DRY and prevents unnecessary runs of code. We can access variables and constants declared outside of an `it` block as long as they are declared inside the same `describe` as the `it`.
+Before we write the `deal` method, we want to writ some tests for it `deal` method: 
 
 ```js
 // test/lib/cards_spec.js
 
 // ...
+
+import { newDeck, deal } from '../../app/lib/cards';
+
+// ...
+
 describe('cards.js', () => {
    // ...
    describe('deal', () => {
@@ -499,4 +506,93 @@ describe('cards.js', () => {
     });
 });
 ```
+
+One thing to note about these tests is that we only run the `newDeck` function once inside the `deal` `describe` block. This makes our code more DRY and prevents unnecessary runs of code. We can access variables and constants declared outside of an `it` block as long as they are declared inside the same `describe` as the `it`.
+
+These tests won't run yet because we haven't written the `deal` method. Let's write it now:
+
+```js
+// app/lib/cards.js
+
+// ...
+
+// deal n cards from the end of List deck
+export const deal = (deck, n) => {
+    let dealt_cards = deck.takeLast(2);
+    let newDeck = deck.skipLast(2);
+    return [newDeck, dealt_cards];
+};
+```
+
+Now try running the tests. One of them should pass, but there is a small error in the function. Try fixing it. You will know if you fixed it if all the tests pass.
+
+We can now simplify `app/index.js`:
+
+```jsx
+// app/index.js
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/app.js';
+
+import { newDeck, deal } from './lib/cards.js';
+
+let deck = fromJS(newDeck());
+let player_hand, dealer_hand;
+
+[deck, player_hand] = deal(deck, 2);
+[deck, dealer_hand] = deal(deck, 2);
+
+ReactDOM.render(
+    <App />,
+    document.getElementById('app')
+);
+```
+
+The only parts of our application state that we still need to add are the win and loss counts and `hasStood`. Since these are primitive types (integers and booleans), we can just add them to the state `Map` when its created.
+
+Let's now create our state `Map`:
+
+```js
+// app/index.js
+
+// ...
+
+import App from './components/app.js';
+import { fromJS } from 'immutable';
+
+import { newDeck, deal } from './lib/cards.js';
+
+// ...
+
+const state = fromJS({
+    deck,
+    player_hand,
+    dealer_hand,
+    "win_count": 0,
+    "loss_count": 0,
+    hasStood: false
+});
+
+console.log(state);
+
+// ...
+```
+
+Now when we build the bundle using `webpack` and refresh the browser page, we will see the state `Map` logged to the console.
+
+The next step is to let our components know about `state`. We do this by passing `state` into our `<App />` component as a "prop". `<App />` looks like an HTML tag, and we can pass it variables the same way we give HTML tags properties:
+
+```jsx
+// app/index.js
+
+// ...
+
+ReactDOM.render(
+    <App state={state} />,
+    document.getElementById('app')
+);
+```
+
+We use the curly braces around `{state}` to indicate to React that it should substitute a variable called `state` for `{state}`.
 
