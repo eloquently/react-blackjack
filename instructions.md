@@ -1406,7 +1406,7 @@ Then we can create an `info.scss` file and give it some styles. I'm just going t
 
 Now that our application is looking beautiful (well functional at least), we can move on to implementing some of the game logic.
 
-## The Game
+## Setting up the Game
 
 We haven't thought too much about what our application will need to do in order to play a game of blackjack.
 
@@ -1634,5 +1634,174 @@ And, finally, we'll add a style for `face-down` cards:
         radial-gradient(circle at 0    50%, white 5%, silver 6%, silver 15%, white 16%, white 20%, silver 21%, silver 30%, white 31%, white 35%, silver 36%, silver 45%, white 46%, white 49%, transparent 50%, transparent);
         background-size:100px 50px;
     }
+}
+```
+
+Now it looks like we're ready to play blackjack!
+
+## Playing the Game
+
+Before we make those "hit" and "stand" buttons do things, we need to set up our components to automatically update when the state changes.
+
+Specifically, if we add a new card to the player's hand in the state `Map`, we want the `Hand` component to automatically update.
+
+This is where our hard-work setting up an immutable state and pure components pays off. We can now easily use Redux to turn our components into "smart components".
+
+### Connecting Components and State
+
+Redux keeps track of the application's state with a `store`. We can modify the state through a "reducer" function. Redux requires us to use a single `store` and a single `reducer()`. `reducer()` must be a pure function -- that is, it must not mutate the current state but rather return a new one. Luckily for us, we are using an immutable `Map` to track state, so we don't have to worry about accidentally mutating state.
+
+Let's install the necessary packages:
+
+```bash
+npm install --save redux react-redux
+```
+
+The first step is to create the `reducer` function. This function will take two arguments: the current state and the desired action. It will return the new state after performing the action.
+
+The first action we want to build is the `SETUP_GAME` action. When the reducer receives a `SETUP_GAME`, it should set up the deck and hands for the player and dealer. Let's write a test for this.
+
+```js
+// test/reducer_spec.js
+
+import { Map } from 'immutable';
+import { expect } from 'chai';
+
+import reducer from '../app/reducer';
+
+describe('reducer', () => {
+    describe("SETUP_GAME", () => {
+        const action = {
+            type: 'SETUP_GAME'
+        };
+        describe("with empty initial state", () => {
+            const initialState = undefined;
+            const nextState = reducer(initialState, action);
+            
+            it('sets up deck', () => {
+                expect(nextState.get('deck').size).to.eq(49);
+            });
+            
+            it('sets up playerHand', () => {
+                expect(nextState.get('playerHand').size).to.eq(2);
+            });
+            
+            it('sets up dealerHand', () => {
+                expect(nextState.get('dealerHand').size).to.eq(2);
+                expect(nextState.get('dealerHand').last()).to.eq(new Map());
+            });
+        });
+    });
+});
+```
+
+To get these tests to pass, let's write our first version of the `reducer` function:
+
+```js
+// app/reducer.js
+
+import { Map } from 'immutable';
+
+const setupGame = (currentState) => {
+    // coming next
+};
+
+export default function(currentState=new Map(), action) {
+    switch(action.type) {
+        case 'SETUP_GAME':
+            return setupGame(currentState);
+    }
+    return currentState;
+}
+```
+
+To keep our code organized, we will have `reducer()` call other functions that actually manage state. This keeps our code more modular.
+
+To fill in `setupGame()`, we'll copy over the code from `index.js`:
+
+```js
+// app/reducer.js
+
+const setupGame = () => {
+    let deck = newDeck();
+    let playerHand, dealerHand;
+    
+    [deck, playerHand] = deal(deck, 2);
+    [deck, dealerHand] = deal(deck, 1);
+    
+    dealerHand = dealerHand.push(new Map());
+    
+    const newState = new Map({ deck, playerHand, dealerHand });
+  
+    return newState;
+};
+
+export default function(currentState=new Map(), action) {
+    switch(action.type) {
+        case 'SETUP_GAME':
+            return setupGame();
+    }
+    return currentState;
+}
+```
+
+The tests should pass now. We also want to be able to send a `SETUP_GAME` action between each of the games in a session. This means that instead of replacing `currentState` with the result of `setupGame()`, we should merge it, so that other state variables like `winCount` won't be lost.
+
+Let's write the test for this behavior.
+
+```js
+// test/reducer_spec.js
+
+// ...
+
+describe('reducer', () => {
+    describe("SETUP_GAME", () => {
+        const action = {
+            type: 'SETUP_GAME'
+        };
+        
+        // ...
+        
+        describe("with existing initial state", () => {
+            const initialState = new Map({'winCount': 10, 'lossCount': 7, 'deck': 'fake deck'});
+            const nextState = reducer(initialState, action);
+            
+            it('adds new variables', () => {
+                expect(Array.from(nextState.keys())).to.include('deck', 'playerHand', 'dealerHand');
+            });
+            
+            it('keeps old variables', () => {
+                expect(nextState.get('winCount')).to.eq(10);
+                expect(nextState.get('lossCount')).to.eq(7);
+            });
+            
+            it('overwrites old variables', () => {
+                expect(nextState.get('deck')).not.to.eq('fake deck');
+            });
+        });
+    });
+});
+```
+
+Now to make it pass, we just need to make a couple of small changes in `reducer.js`:
+
+```js
+// app/reducer.js
+
+// ...
+
+const setupGame = (currentState) => {
+    
+    // ...
+  
+    return currentState.merge(newState);
+};
+
+export default function(currentState=new Map(), action) {
+    switch(action.type) {
+        case 'SETUP_GAME':
+            return setupGame(currentState);
+    }
+    return currentState;
 }
 ```
