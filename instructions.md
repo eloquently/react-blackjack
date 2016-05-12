@@ -1059,7 +1059,7 @@ We need to give each element a unique `key` attribute that React will use to dis
 
 [comment]: <> (Above paragraphs could use some work)
 
-Now it's time to flesh out our `Card` component. We want each `Card` to display its `suit` and `rank`. The test for this will be fairly simple:
+Now it's time to flesh out our `Card` component. We want each `Card` to display its `suit` and `rank`. We also want the `Card`'s `div` element to have the card's suit as a class so that we can style the card appropriately. These tests are straightforward:
 
 ```jsx
 // test/components/card_spec.js
@@ -1081,6 +1081,10 @@ describe('<Card />', () => {
         expect(rendered).to.include.text(suit);
         expect(rendered).to.include.text(rank);
     });
+    
+    it('adds a css class for the suit', () => {
+        expect(rendered.find(`.card.${suit}`)).to.have.length(1);
+    });
 });
 ```
 
@@ -1094,7 +1098,7 @@ import React from 'react';
 export default class Card extends React.Component {
     render() {
         return (
-            <div className="card">
+            <div className={`card ${this.props.suit}`}>
                 <div className="top-rank">
                     {this.props.rank}
                 </div>
@@ -1319,6 +1323,7 @@ We're not going to go into much depth with SASS. Feel free to use my stylesheet 
     
     .rank {
         padding: 5px;
+        font-size: 20px;
     }
     
     .top-rank {
@@ -1339,33 +1344,36 @@ We're not going to go into much depth with SASS. Feel free to use my stylesheet 
     .suit {
         display: none;
     }
+    
+    &.H, &.D {
+        color: red;
+        border-color: red;
+    }
+    
+    &:after {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%,-50%);
+        font-size: 40px;
+    }
+    
+    &.H:after {
+        content: '\2665';
+    }
+    
+    &.D:after {
+        content: '\2666';
+    }
+    
+    &.S:after {
+        content: '\2660';
+    }
+    
+    &.C:after {
+        content: '\2663';
+    }
 }
 
-.card.H, .card.D {
-    color: red;
-    border-color: red;
-}
-
-
-.card:after {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    font-size: 40px;
-}
-
-.card.H:after {
-    content: '\2665';
-}
-.card.D:after {
-    content: '\2666';
-}
-.card.S:after {
-    content: '\2660';
-}
-.card.C:after {
-    content: '\2663';
-}
 ```
 
 Notice that as you change this file, your browser reloads the stylesheet without changing the cards. This is hot module replacement at work. 
@@ -1478,3 +1486,153 @@ Your test should pass now. Since we are randomly choosing cards from the deck, t
 
 ### Dummy Cards
 
+We are just going to use an empty `Map` object as a dummy card. This means that when we pass `Hand` a `cards` prop with one or more empty `Map`s it should render `Card` objects with a `faceDown=true` prop.
+
+We'll also modify our other test to make sure that the non-dummy cards get `faceDown=false`:
+
+```jsx
+// test/components/hand_spec.js
+
+// ...
+
+describe('<Hand />', () => {
+    describe('without dummy cards', () => { 
+        
+        // ...
+        
+        it('gives each card the correct props', () => {
+            hand.forEach((card, i) => {
+                expect(cards.at(i)).to.have.prop('suit', card.get('suit'));
+                expect(cards.at(i)).to.have.prop('rank', card.get('rank'));
+                expect(cards.at(i)).to.have.prop('faceDown', false);
+            });
+        });
+    });
+    
+    describe('with dummy cards', () => {
+        const rendered = shallow(<Hand cards={hand.push(new Map())} />);
+        const cards = rendered.find('Card');
+        
+        it('renders correct number of cards', () => {
+            expect(cards).to.have.length(n+1);
+        });
+        
+        it('gives dummy card faceDown=true', () => {
+            expect(cards.last()).to.have.prop('faceDown', true);
+        });
+    });
+    
+});
+```
+
+Now let's make the tests pass:
+
+```jsx
+// app/components/hand.js
+
+import React from 'react';
+import Card from './card';
+
+export default class Hand extends React.Component {
+    render() {
+        return (
+            <div className="hand">
+                {this.props.cards.map((card, i) =>
+                    <Card suit={card.get('suit')}
+                          rank={card.get('rank')}
+                          faceDown={!(card.has('suit') && card.has('rank'))}
+                          key={i} />
+                )}
+            </div>
+        );
+    }
+};
+```
+
+We want our `Card` class to give face down cards a `face-down` class instead of their `suit` as a class so that we can apply the appropriate styling.
+
+Let's write the test!
+
+```jsx
+// test/components/card_spec.js
+
+// ...
+
+describe('<Card />', () => { 
+    describe('non-dummy card', () => {
+        const suit = 'C';
+        const rank = 2;
+        
+        // ...
+    });
+    
+    describe('non-dummy card', () => {
+        const suit = undefined;
+        const rank = undefined;
+        const rendered = shallow(<Card suit={suit} rank={rank} faceDown={true} />);
+    
+        it('adds face-down class', () => {
+            expect(rendered.find('.card.face-down')).to.have.length(1);
+        });
+    });
+    
+});
+```
+
+Now the code to make it pass:
+
+```jsx
+// app/components/card.js
+
+// ...
+
+export default class Card extends React.Component {
+    render() {
+        return (
+            <div className={`card ${this.props.suit ? this.props.suit : 'face-down'}`}>
+                // ...
+            </div>
+        );
+    }
+}
+```
+
+Now let's change the initial application state to give the dealer one dummy card and one real card.
+
+```js
+// app/index.js
+
+// ...
+
+import { fromJS, Map } from 'immutable';
+
+// ...
+
+[deck, dealerHand] = deal(deck, 1);
+
+dealerHand = dealerHand.push(new Map());
+
+// ...
+```
+
+And, finally, we'll add a style for `face-down` cards:
+
+```scss
+/* app/css/components/card.scss */
+
+.card {
+    /* ... */
+    &.face-down {
+        /* pattern from http://lea.verou.me/css3patterns/ */
+        
+        background-color:silver;
+        background-image: 
+        radial-gradient(circle at 100% 150%, silver 24%, white 25%, white 28%, silver 29%, silver 36%, white 36%, white 40%, transparent 40%, transparent),
+        radial-gradient(circle at 0    150%, silver 24%, white 25%, white 28%, silver 29%, silver 36%, white 36%, white 40%, transparent 40%, transparent),
+        radial-gradient(circle at 50%  100%, white 10%, silver 11%, silver 23%, white 24%, white 30%, silver 31%, silver 43%, white 44%, white 50%, silver 51%, silver 63%, white 64%, white 71%, transparent 71%, transparent),
+        radial-gradient(circle at 100% 50%, white 5%, silver 6%, silver 15%, white 16%, white 20%, silver 21%, silver 30%, white 31%, white 35%, silver 36%, silver 45%, white 46%, white 49%, transparent 50%, transparent),
+        radial-gradient(circle at 0    50%, white 5%, silver 6%, silver 15%, white 16%, white 20%, silver 21%, silver 30%, white 31%, white 35%, silver 36%, silver 45%, white 46%, white 49%, transparent 50%, transparent);
+        background-size:100px 50px;
+    }
+}
+```
