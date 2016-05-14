@@ -1647,7 +1647,7 @@ Specifically, if we add a new card to the player's hand in the state `Map`, we w
 
 This is where our hard-work setting up an immutable state and pure components pays off. We can now easily use Redux to turn our components into "smart components".
 
-### Connecting Components and State
+## Connecting Components and State
 
 Redux keeps track of the application's state with a `store`. We can modify the state through a "reducer" function. Redux requires us to use a single `store` and a single `reducer()`. `reducer()` must be a pure function -- that is, it must not mutate the current state but rather return a new one. Luckily for us, we are using an immutable `Map` to track state, so we don't have to worry about accidentally mutating state.
 
@@ -1659,7 +1659,9 @@ npm install --save redux react-redux
 
 The first step is to create the `reducer` function. This function will take two arguments: the current state and the desired action. It will return the new state after performing the action.
 
-The first action we want to build is the `SETUP_GAME` action. When the reducer receives a `SETUP_GAME`, it should set up the deck and hands for the player and dealer. Let's write a test for this.
+### Simple Actions
+
+The first action we want to build is the `SETUP_GAME` action. When the reducer receives a `SETUP_GAME`, it should set up the deck and hands for the player and dealer. Let's write a test for this:
 
 ```js
 // test/reducer_spec.js
@@ -1690,6 +1692,10 @@ describe('reducer', () => {
                 expect(nextState.get('dealerHand').size).to.eq(2);
                 expect(nextState.get('dealerHand').last()).to.eq(new Map());
             });
+            
+            it('sets up hasStood', () => {
+                expect(nextState.get('hasStood')).to.eq(false);
+            })
         });
     });
 });
@@ -1703,7 +1709,7 @@ To get these tests to pass, let's write our first version of the `reducer` funct
 import { Map } from 'immutable';
 
 const setupGame = (currentState) => {
-    // coming next
+    // coming soon
 };
 
 export default function(currentState=new Map(), action) {
@@ -1747,7 +1753,7 @@ export default function(currentState=new Map(), action) {
 
 The tests should pass now. We also want to be able to send a `SETUP_GAME` action between each of the games in a session. This means that instead of replacing `currentState` with the result of `setupGame()`, we should merge it, so that other state variables like `winCount` won't be lost.
 
-Let's write the test for this behavior.
+Let's write the test for this behavior:
 
 ```js
 // test/reducer_spec.js
@@ -1767,7 +1773,7 @@ describe('reducer', () => {
             const nextState = reducer(initialState, action);
             
             it('adds new variables', () => {
-                expect(Array.from(nextState.keys())).to.include('deck', 'playerHand', 'dealerHand');
+                expect(Array.from(nextState.keys())).to.include('deck', 'playerHand', 'dealerHand', 'hasStood');
             });
             
             it('keeps old variables', () => {
@@ -1805,3 +1811,224 @@ export default function(currentState=new Map(), action) {
     return currentState;
 }
 ```
+
+Now let's add a similar action: `SET_RECORD`. This action will set the player's win and loss records to `0`. First the test:
+
+```js
+// test/reducer_spec.js
+
+// ...
+
+describe('reducer', () => {
+    describe("SETUP_GAME", () => {
+        
+        // ...
+        
+    });
+    
+    describe("SET_RECORD", () => {
+        const action = {
+            type: 'SET_RECORD',
+            wins: 3,
+            losses: 2
+        };
+        
+        const initialState = new Map({'winCount': 10, 'lossCount': 7, 'deck': 'fake deck'});
+        const nextState = reducer(initialState, action);
+        
+        it('sets winCount and lossCount', () => {
+            expect(nextState.get('winCount')).to.eq(3);
+            expect(nextState.get('lossCount')).to.eq(2);
+        });
+        
+        it('keeps old variables', () => {
+            expect(nextState.get('deck')).to.eq('fake deck');
+        });
+    });
+});
+```
+
+Then the code:
+
+```js
+// app/reducer.js
+
+// ...
+
+const setRecord = (currentState, wins, losses) => {
+    return currentState.merge(new Map({ "winCount": wins, "lossCount": losses }));
+}
+
+export default function(currentState=new Map(), action) {
+    switch(action.type) {
+        case 'SETUP_GAME':
+            return setupGame(currentState);
+        case 'SET_RECORD':
+            return setRecord(currentState, action.wins, action.losses);
+    }
+    return currentState;
+}
+```
+
+### Action Creators
+
+Instead of writing out actions as objects (e.g: `const action = { type: 'SET_RECORD', wins: 3, losses: 2 };`), we are going to write some helper functions that create the actions for us. This makes our code a little more DRY and organized.
+
+These functions are very simple, so there is no need to write tests for them. They're also going to be short, so we can put them all in one file:
+
+```js
+// app/action_creators.js
+
+export function setupGame() {
+    return { "type": "SETUP_GAME" }
+}
+
+export function setRecord(wins, losses) {
+    return { 
+        "type": "SET_RECORD",
+        "wins": wins,
+        "losses": losses,
+    };
+}
+```
+
+Now in our `reducer()` tests, we can import and call these functions to create our actions:
+
+```js
+// test/reducer_spec.js
+
+// ...
+import { setupGame, setRecord } from '../app/action_creators';
+
+import reducer from '../app/reducer';
+
+describe('reducer', () => {
+    describe("SETUP_GAME", () => {
+        const action = setupGame();
+        
+        // ...
+    });
+     
+    describe("SET_RECORD", () => {
+        const action = setRecord(3, 2);
+        
+        // ...
+    });
+});
+```
+
+If we dispatch `SETUP_GAME` and `SET_RECORD` with `0` wins and `0` losses, we get the initial values we want for all the state variables (`deck`, `playerHand`, `dealerHand`, `winCount`, `lossCount`, and `hasStood`). When our application starts, we will want to execute both of these actions.
+
+Let's set up a Redux `store` and dispatch some actions to it to get our intiial state in `index.js`. First, we'll create the store and link it with our reducer function:
+
+<div class="file-path">app/index.js</div>
+```js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/app.js';
+import {createStore} from 'redux';
+
+import { reducer } from './reducer';
+
+require('./css/main.scss');
+
+let store = createStore(reducer);
+
+// ...
+```
+
+<div class="file-path">app/index.js</div>
+```js
+// ...
+
+import { reducer } from './reducer';
+import { setupGame, setRecord } from '../app/action_creators';
+
+require('./css/main.scss');
+
+let store = createStore(reducer);
+
+store.dispatch(setupGame());
+store.dispatch(setRecord(0, 0));
+
+// ...
+```
+
+Now we need to share the `store` with our React components. `react-redux` provides us with a component called `Provider` that takes care of that for us. We just need to wrap the `App` component with `Provider` and pass `Provider` our `store` as a prop. We'll also change the `state` prop from `App` to get the state from `store`.
+
+<div class="file-path">app/index.js</div>
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/app.js';
+import {createStore} from 'redux';
+import { Provider } from 'react-redux';
+
+import { reducer } from './reducer';
+import { setupGame, setRecord } from '../app/action_creators';
+
+require('./css/main.scss');
+
+let store = createStore(reducer);
+
+store.dispatch(setupGame());
+store.dispatch(setRecord(0, 0));
+
+ReactDOM.render(
+    <Provider store={store}>
+        <App />
+    </Provider>,
+    document.getElementById('app')
+);
+```
+
+Now if we look at the application in the browser, it should look the same as before we replaced `state` with `store`. Congratulations! You just dispatched your first Redux actions!
+
+### React and Redux DevTools
+
+Let's take a quick break from writing code and check out the DevTools for React and Redux. This guide will talk about how to use the tools in Chrome. They are extremely useful for debugging and developing your application, so if you don't have Chrome, download it and go through this section!
+
+#### React DevTools
+
+You can install the React DevTools [here](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?hl=en). After adding the extension and refreshing your browser (you may have to restart it), you will see a new tab on the Chrome Developer Tool panel (open with `ctrl+shift+j`).
+
+If you switch to the React tab, you will see a DOM composed of the React components you wrote along with the props being passed to them. This is very useful if you want to see which props a component has.
+
+
+#### Redux DevTools
+
+While the React DevTools are very useful, they are also not that exciting. The Redux DevTools (install them [here](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en)), on the other hand are pretty cool. It keeps track of all actions dispatched by your application. 
+
+We do need to change one thing in our code to get the webtools to work. When we define `store`, we can tell it to use middleware. Middleware functions do things with actions after they are dispatched, but before they reach the reducer. It is easy to write your own middleware, but for now, we will just use a function provided by [someone else](https://github.com/zalmoxisus/redux-devtools-extension).
+
+The Chrome extension attaches a middleware function to `window` called `devToolsExtension()`. We can pass this to `createStore` as the third parameter. The second parameter is for the initial state, but we don't need this so we'll just use `undefined`.
+
+<div class="file-path">app/index.js</div>
+```js
+// ...
+
+require('./css/main.scss');
+
+let store = createStore(reducer, undefined, window.devToolsExtension ? window.devToolsExtension() : undefined);
+
+// ...
+```
+
+Now refresh the page with our application and go to the Redux tab on the DevTool panel (if you don't see the Redux tab on your DevTool panel, restart your browser). If everything is working, you should see three events: `@@INIT`, `SETUP_GAME`, and `SET_RECORD`. These are the actions that our application has dispatched so far. Later, we will make the buttons on the application dispatch actions, and when you click on them, new actions will appear on this list in real-time.
+
+Because reducers are pure functions operating on an immutable state, Redux allows for "time-travel". In practice, this means that it's very easy to go back in time in your application by "undoing" the last action(s). You can do this in the DevTools by simply clicking on the name of an action. If you click on the `SET_RECORD` action, we will be taken back in time to the state of the application before that action was performed. 
+
+You can even undo an action that was not the last one performed! Try undoing `SETUP_GAME` and see what happens to the state after `SET_RECORD`.
+
+We can also use the DevTool to dispatch new actions. Click on the dispatcher button and type in:
+
+```js
+{
+type: "SET_RECORD",
+wins: 1,
+losses: 0
+}
+```
+
+When you hit dispatch, look at the new application state at the bottom of the action list. Our components don't update to reflect the new state because they are not yet linked up with the `store`. Let's fix that!
+

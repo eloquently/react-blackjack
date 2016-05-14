@@ -13,15 +13,23 @@ const setupGame = (currentState) => {
     
     dealerHand = dealerHand.push(new Map());
     
-    const newState = new Map({ deck, playerHand, dealerHand });
+    const hasStood = false;
+    
+    const newState = new Map({ deck, playerHand, dealerHand, hasStood });
   
     return currentState.merge(newState);
+};
+
+const setRecord = (currentState, wins, losses) => {
+    return currentState.merge(new Map({ "winCount": wins, "lossCount": losses }));
 };
 
 export default function(currentState=new Map(), action) {
     switch(action.type) {
         case 'SETUP_GAME':
             return setupGame(currentState);
+        case 'SET_RECORD':
+            return setRecord(currentState, action.wins, action.losses);
     }
     return currentState;
 }
