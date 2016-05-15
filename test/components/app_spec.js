@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { shallow } from 'enzyme';
 import { fromJS } from 'immutable';
 
-import App from '../../app/components/app';
+import { App } from '../../app/components/app';
 
 import { newDeck, deal } from '../../app/lib/cards.js';
 
@@ -25,16 +25,10 @@ const state = fromJS({
 }); 
 
 describe('<App />', () => {
-    const rendered = shallow(<App state={state} />);
+    const rendered = shallow(<App playerHand={playerHand} dealerHand={dealerHand} />);
     
-    it('renders one <Info /> component', () => {
-        expect(rendered.find('Info')).to.have.length(1);
-    });
-    
-    it('passes props to <Info />', () => {
-        expect(rendered.find('Info').first()).to.have.prop('winCount', state.get('winCount'));
-        expect(rendered.find('Info').first()).to.have.prop('lossCount', state.get('lossCount'));
-        expect(rendered.find('Info').first()).to.have.prop('hasStood', state.get('hasStood'));
+    it('renders one <InfoContainer /> component', () => {
+        expect(rendered.find('Connect(Info)')).to.have.length(1);
     });
     
     it('renders two <Hand /> components', () => {

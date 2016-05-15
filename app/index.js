@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './components/app.js';
+import { AppContainer } from './components/app.js';
 import {createStore} from 'redux';
 import { Provider } from 'react-redux';
 
@@ -16,10 +16,9 @@ let store = createStore(reducer, undefined, window.devToolsExtension ? window.de
 store.dispatch(setupGame());
 store.dispatch(setRecord(0, 0));
 
-console.log(store);
 ReactDOM.render(
     <Provider store={store}>
-        <App state={store.getState()} />
+        <AppContainer />
     </Provider>,
     document.getElementById('app')
 );
