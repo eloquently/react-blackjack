@@ -19,7 +19,7 @@ module.exports = {
         "loaders": [
             {
                 "test": /.js?$/,
-                "loader": 'react-hot!babel-loader',
+                "loader": 'react-hot!babel-loader?presets[]=es2015,presets[]=react',
                 "exclude": /node_modules/
             },
             {
