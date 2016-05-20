@@ -7,17 +7,21 @@ import { dealToPlayer, stand } from '../action_creators';
 
 export class Info extends React.Component {
     render() {
+        let disableButtons = false;
+        if(this.props.hasStood || this.props.gameOver) {
+            disableButtons = true;
+        }
         return (
             <div id="info">
                 <span id="player_record">
                     Wins: {this.props.winCount} Losses: {this.props.lossCount}
                 </span>
                 <span id="buttons">
-                    <button disabled={this.props.hasStood}
+                    <button disabled={disableButtons}
                             onClick={this.props.onClickHit}>
                         Hit
                     </button>
-                    <button disabled={this.props.hasStood}
+                    <button disabled={disableButtons}
                             onClick={this.props.onClickStand}>
                         Stand
                     </button>
@@ -31,7 +35,8 @@ const mapStateToProps = (state) => {
     return {
         winCount: state.get('winCount'),
         lossCount: state.get('lossCount'),
-        hasStood: state.get('hasStood')
+        hasStood: state.get('hasStood'),
+        gameOver: state.get('gameOver')
     };
 };
 const mapDispatchToProps = (dispatch) => {

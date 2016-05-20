@@ -1,5 +1,3 @@
-// test/components/info_spec.js
-
 import React from 'react';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -48,7 +46,7 @@ describe('<Info />', () => {
     });
     
     describe('when hasStood is true', () => {
-        const rendered = shallow(<Info winCount={1} lossCount={2} hasStood={true} />);
+        const rendered = shallow(<Info hasStood={true} />);
         
         it('disables hit and stand buttons', () => {
             const buttons = rendered.find('button');
@@ -58,4 +56,14 @@ describe('<Info />', () => {
         });
     });
     
-}); 
+    describe('when gameOver is true', () => {
+        const rendered = shallow(<Info gameOver={true} />);
+        
+        it('disables hit and stand buttons', () => {
+            const buttons = rendered.find('button');
+            buttons.forEach((b) => {
+                expect(b).to.have.attr('disabled');
+            });
+        });
+    });
+});
