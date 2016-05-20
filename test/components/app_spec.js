@@ -1,5 +1,3 @@
-// test/components/app_spec.js
-
 import React from 'react';
 import { expect } from 'chai';
 import { shallow } from 'enzyme';
@@ -38,5 +36,27 @@ describe('<App />', () => {
     it('passes props to <Hand />s', () => {
         expect(rendered.find('Hand').first()).to.have.prop('cards', state.get("playerHand"));
         expect(rendered.find('Hand').last()).to.have.prop('cards', state.get("dealerHand"));
+    });
+    
+    describe('when gameOver', () => {
+        const rendered = shallow(<App gameOver={true} />);
+        
+        it('renders <GameOverMessageContainer />', () => {
+            expect(rendered.find('Connect(GameOverMessage)')).to.have.length(1);
+        });
+        
+        describe('player won', () => {
+            const rendered = shallow(<App gameOver={true} playerWon={true} />);
+            it('gives <GameOverMessageContainer /> correct prop', () => {
+                expect(rendered.find('Connect(GameOverMessage)')).to.have.prop('win', true);
+            });
+        });
+        
+        describe('player lost', () => {
+            const rendered = shallow(<App gameOver={true} playerWon={false} />);
+            it('gives <GameOverMessageContainer /> correct prop', () => {
+                expect(rendered.find('Connect(GameOverMessage)')).to.have.prop('win', false);
+            });
+        });
     });
 });

@@ -48,3 +48,30 @@ export const deal = (deck, n, seed) => {
     }
     return [newDeck, dealtCards];
 };
+
+export const rankAsNum = (rank) => {
+    if(rank == 'K' || rank == 'Q' || rank == 'J') {
+        return 10;
+    } else {
+        return rank;
+    }
+};
+
+export const score = (cards) => {
+    const aces = cards.filter((card) => card.get('rank') == 'A');
+    const nonAces = cards.filter((card) => card.get('rank') != 'A');
+    
+    if(nonAces.size == 0 && aces.size == 0) {
+        return 0;
+    } else if(aces.size == 0) {
+        return cards.reduce( (sum, card) => {
+            return sum + rankAsNum(card.get('rank'));
+        }, 0);
+    } else {
+        let acesAllOneScore = score(nonAces) + aces.size;
+        if(acesAllOneScore <= 11) {
+            acesAllOneScore += 10;
+        }
+        return acesAllOneScore;
+    }
+};
