@@ -1,5 +1,3 @@
-// app/index.js
-
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { AppContainer } from './components/app.js';
@@ -13,8 +11,8 @@ require('./css/main.scss');
 
 let store = createStore(reducer, undefined, window.devToolsExtension ? window.devToolsExtension() : undefined);
 
-store.dispatch(setupGame());
 store.dispatch(setRecord(0, 0));
+store.dispatch(setupGame());
 
 ReactDOM.render(
     <Provider store={store}>

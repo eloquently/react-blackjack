@@ -22,6 +22,14 @@ describe('<GameOverMessage />' , () => {
         });
     });
     
+    describe('for draw', () => {
+        const rendered = shallow(<GameOverMessage win={undefined} />);
+
+        it('displays message', () => {
+            expect(rendered).to.include.text('Tie game.');
+        });
+    });
+    
     describe('next game button', () => {
         it('triggers callback when button is pressed', () => {
             const nextGameSpy = sinon.spy();

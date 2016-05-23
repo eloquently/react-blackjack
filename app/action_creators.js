@@ -1,5 +1,3 @@
-// app/action_creators.js
-
 export function setupGame(seed=new Date().getTime()) {
     return { "type": "SETUP_GAME", seed };
 }
@@ -16,6 +14,6 @@ export function dealToPlayer(seed=new Date().getTime()) {
     return { "type": "DEAL_TO_PLAYER", seed };
 }
 
-export function stand() {
-    return { "type": "STAND" };
+export function stand(seed=new Date().getTime()) {
+    return { "type": "STAND", seed };
 }

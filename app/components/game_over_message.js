@@ -4,9 +4,19 @@ import { setupGame } from '../action_creators';
 
 export class GameOverMessage extends React.Component {
     render() {
+        let message;
+        
+        if(this.props.win === undefined) {
+            message = "Tie game.";
+        } else if(this.props.win === true) {
+            message = "You win!";
+        } else {
+            message = "You lose :(";
+        }
+
         return (
             <div id="game_over_message">
-                { this.props.win ? 'You win!' : 'You lose :(' }
+                { message }
                 <button onClick={this.props.nextGame}>Next Game</button>
             </div>
         );

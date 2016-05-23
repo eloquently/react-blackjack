@@ -1,6 +1,6 @@
 import { Map } from 'immutable';
 
-import { newDeck, deal, score } from './lib/cards.js';
+import { newDeck, deal, score } from './lib/cards';
 
 const setupGame = (currentState, seed) => {
     let deck = newDeck(seed);
@@ -51,18 +51,46 @@ const dealToPlayer = (currentState, seed) => {
         const gameOver = true;
         const playerWon = false;
         newState = newState.merge({lossCount, gameOver, playerWon});
-    } else if(newScore == 21) {
-        const winCount = currentState.get('winCount') + 1;
-        const gameOver = true;
-        const playerWon = true;
-        newState = newState.merge({winCount, gameOver, playerWon});
     }
     
     return currentState.merge(newState);
 };
 
-const stand = (currentState) => {
-    return currentState.merge(new Map({"hasStood": true}));
+const stand = (currentState, seed) => {
+    let newState = new Map({"hasStood": true});
+    
+    let dealerHand = currentState.get('dealerHand');
+    let deck = currentState.get('deck');
+    
+    dealerHand = dealerHand.filter((element) => element != new Map());
+    
+    while(score(dealerHand) < 17) {
+        let newCards;
+        [deck, newCards] = deal(deck, 1, seed);
+        dealerHand = dealerHand.push(newCards.get(0));
+    }
+    
+    let winCount = currentState.get('winCount');
+    let lossCount = currentState.get('lossCount');
+    const playerHand = currentState.get('playerHand');
+    
+    const playerScore = score(playerHand);
+    const dealerScore = score(dealerHand);
+    let playerWon = undefined;
+    
+    if(playerScore > dealerScore || dealerScore > 21) {
+        winCount += 1;
+        playerWon = true;
+    } else if(dealerScore > playerScore) {
+        lossCount += 1;
+        playerWon = false;
+    }
+    
+    const gameOver = true;
+    
+    newState = newState.merge({dealerHand, deck, winCount, lossCount, gameOver, playerWon});
+    
+    return currentState.merge(newState);
 };
 
 export default function(currentState=new Map(), action) {
@@ -74,7 +102,7 @@ export default function(currentState=new Map(), action) {
         case 'DEAL_TO_PLAYER':
             return dealToPlayer(currentState, action.seed);
         case 'STAND':
-            return stand(currentState);
+            return stand(currentState, action.seed);
     }
     return currentState;
 }
