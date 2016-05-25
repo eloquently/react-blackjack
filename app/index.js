@@ -4,7 +4,7 @@ import { createStore, applyMiddleware, compose } from 'redux';
 import { Provider } from 'react-redux';
 import 'babel-polyfill';
 import createSagaMiddleware from 'redux-saga';
-import { Router, Route, browserHistory } from 'react-router'
+import { Router, Route, hashHistory } from 'react-router'
 
 import reducer from './reducers/reducer';
 import { setupGame, setRecord } from '../app/action_creators';
@@ -37,7 +37,7 @@ const routes = <Route component={Root}>
 
 ReactDOM.render(
     <Provider store={store}>
-        <Router history={browserHistory}>
+        <Router history={hashHistory}>
             {routes}
         </Router>
     </Provider>,

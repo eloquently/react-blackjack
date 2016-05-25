@@ -28,6 +28,7 @@
     "react-redux": "^4.4.5",
     "react-router": "^2.4.1",
     "redux": "^3.5.2",
+    "redux-form": "^5.2.4",
     "redux-saga": "^0.10.4",
     "seedrandom": "^2.4.2"
   },
