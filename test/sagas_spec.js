@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { Map, List } from 'immutable';
 import { delay } from 'redux-saga';
 
-const getState = () => new Map({ dealerHand: new List() });
+const getState = () => ({game: new Map({ dealerHand: new List() }) });
 
 describe('sagas', () => {
     describe('dealToDealerUntilDone', () => {

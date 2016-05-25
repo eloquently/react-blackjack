@@ -6,7 +6,7 @@ import 'babel-polyfill';
 import createSagaMiddleware from 'redux-saga';
 import { Router, Route, browserHistory } from 'react-router'
 
-import reducer from './reducer';
+import reducer from './reducers/reducer';
 import { setupGame, setRecord } from '../app/action_creators';
 import { watchStand } from './sagas';
 
