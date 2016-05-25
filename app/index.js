@@ -4,7 +4,7 @@ import { createStore, applyMiddleware, compose } from 'redux';
 import { Provider } from 'react-redux';
 import 'babel-polyfill';
 import createSagaMiddleware from 'redux-saga';
-import { Router, Route, browserHistory } from 'react-router'
+import { Router, Route, hashHistory } from 'react-router'
 
 import reducer from './reducers/reducer';
 import { setupGame, setRecord } from '../app/action_creators';
@@ -14,6 +14,7 @@ import { Root } from './components/root'
 import { AppContainer } from './components/app';
 import { Settings } from './components/settings';
 
+import { syncHistoryWithStore } from 'react-router-redux'
 
 require('./css/main.scss');
 
@@ -27,6 +28,8 @@ const store = createStore(reducer, undefined, compose(
 
 sagaMiddleware.run(watchStand, store.getState);
 
+const history = syncHistoryWithStore(hashHistory, store)
+
 store.dispatch(setRecord(0, 0));
 store.dispatch(setupGame());
 
@@ -37,7 +40,7 @@ const routes = <Route component={Root}>
 
 ReactDOM.render(
     <Provider store={store}>
-        <Router history={browserHistory}>
+        <Router history={history}>
             {routes}
         </Router>
     </Provider>,
