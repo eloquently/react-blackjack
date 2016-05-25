@@ -56,27 +56,27 @@ const dealToPlayer = (currentState, seed) => {
     return currentState.merge(newState);
 };
 
-const stand = (currentState, seed) => {
-    let newState = new Map({"hasStood": true});
-    
+const dealToDealer = (currentState, seed) => {
     let dealerHand = currentState.get('dealerHand');
     let deck = currentState.get('deck');
     
-    dealerHand = dealerHand.filter((element) => element != new Map());
+    let newCards;
+    [deck, newCards] = deal(deck, 1, seed);
+    dealerHand = dealerHand.push(newCards.get(0));
     
-    while(score(dealerHand) < 17) {
-        let newCards;
-        [deck, newCards] = deal(deck, 1, seed);
-        dealerHand = dealerHand.push(newCards.get(0));
-    }
-    
+    return currentState.merge({ deck, dealerHand });
+};
+
+const determineWinner = (currentState) => {
     let winCount = currentState.get('winCount');
     let lossCount = currentState.get('lossCount');
     const playerHand = currentState.get('playerHand');
+    const dealerHand = currentState.get('dealerHand');
+    const gameOver = true;
     
     const playerScore = score(playerHand);
-    const dealerScore = score(dealerHand);
     let playerWon = undefined;
+    const dealerScore = score(dealerHand);
     
     if(playerScore > dealerScore || dealerScore > 21) {
         winCount += 1;
@@ -86,11 +86,17 @@ const stand = (currentState, seed) => {
         playerWon = false;
     }
     
-    const gameOver = true;
+    return currentState.merge({ winCount, lossCount, gameOver, playerWon});
+};
+
+
+const stand = (currentState, seed) => {
+    let hasStood = true;
+    let dealerHand = currentState.get('dealerHand');
     
-    newState = newState.merge({dealerHand, deck, winCount, lossCount, gameOver, playerWon});
+    dealerHand = dealerHand.filter((element) => element != new Map());
     
-    return currentState.merge(newState);
+    return currentState.merge({hasStood, dealerHand});
 };
 
 export default function(currentState=new Map(), action) {
@@ -101,6 +107,10 @@ export default function(currentState=new Map(), action) {
             return setRecord(currentState, action.wins, action.losses);
         case 'DEAL_TO_PLAYER':
             return dealToPlayer(currentState, action.seed);
+        case 'DEAL_TO_DEALER':
+            return dealToDealer(currentState, action.seed);
+        case 'DETERMINE_WINNER':
+            return determineWinner(currentState);
         case 'STAND':
             return stand(currentState, action.seed);
     }
