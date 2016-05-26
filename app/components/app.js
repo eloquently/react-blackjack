@@ -13,18 +13,32 @@ export class App extends React.Component {
             messageComponent = <GameOverMessageContainer win={this.props.playerWon} />;
         }
         
+        let mainContent;
+        
+        if(!this.props.fetchingRecord) {
+            mainContent = (
+                <div>
+                    <InfoContainer />
+                    { messageComponent }
+                    <strong>Player hand:</strong>
+                    <Hand cards={this.props.playerHand } />
+                    <strong>Dealer hand:</strong>
+                    <Hand cards={this.props.dealerHand } />
+                </div>
+            );
+        } else {
+            mainContent = (
+                <h3>Loading ...</h3>
+            );
+        }
+        
         return (
             <div className="app">
                 <h1>React Blackjack</h1>
                 <div className="links">
                     <Link to="/settings">Settings</Link>
                 </div>
-                <InfoContainer />
-                { messageComponent }
-                <strong>Player hand:</strong>
-                <Hand cards={this.props.playerHand } />
-                <strong>Dealer hand:</strong>
-                <Hand cards={this.props.dealerHand } />
+                { mainContent }
             </div>
         );
     }
@@ -35,7 +49,8 @@ function mapStateToProps(state) {
         playerHand: state.game.get('playerHand'),
         dealerHand: state.game.get('dealerHand'),
         gameOver: state.game.get('gameOver'),
-        playerWon: state.game.get('playerWon')
+        playerWon: state.game.get('playerWon'),
+        fetchingRecord: state.api.get('fetchingRecord')
     };
 }
 

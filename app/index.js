@@ -6,11 +6,11 @@ import 'babel-polyfill';
 import createSagaMiddleware from 'redux-saga';
 import { Router, Route, hashHistory } from 'react-router';
 import { Map } from 'immutable';
-
+import queryString from 'query-string';
 
 import reducer from './reducers/reducer';
-import { setupGame, setRecord } from '../app/action_creators';
-import { watchStand } from './sagas';
+import { setupGame, fetchRecord } from '../app/action_creators';
+import { watchActions } from './sagas';
 
 import { Root } from './components/root';
 import { AppContainer } from './components/app';
@@ -22,18 +22,20 @@ require('./css/main.scss');
 
 const sagaMiddleware = createSagaMiddleware();
 
-const initialState = { settings: new Map({speed: 750}) };
+const userToken = queryString.parse(window.location.search).user;
+
+const initialState = { settings: new Map({speed: 750, userToken}) };
 
 const store = createStore(reducer, initialState, compose(
     applyMiddleware(sagaMiddleware),
     window.devToolsExtension ? window.devToolsExtension() : f => f
 ));
 
-sagaMiddleware.run(watchStand, store.getState);
+sagaMiddleware.run(watchActions, store.getState);
 
 const history = syncHistoryWithStore(hashHistory, store);
 
-store.dispatch(setRecord(0, 0));
+store.dispatch(fetchRecord());
 store.dispatch(setupGame());
 
 const routes = <Route component={Root}>

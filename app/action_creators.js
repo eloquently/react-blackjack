@@ -3,11 +3,7 @@ export function setupGame(seed=new Date().getTime()) {
 }
 
 export function setRecord(wins, losses) {
-    return { 
-        "type": "SET_RECORD",
-        wins,
-        losses
-    };
+    return { "type": "SET_RECORD", wins, losses };
 }
 
 export function dealToPlayer(seed=new Date().getTime()) {
@@ -28,4 +24,28 @@ export function determineWinner() {
 
 export function setSpeed(newSpeed) {
     return { "type": "SET_SPEED", newSpeed };
+}
+
+export function fetchRecord() {
+    return { "type": "FETCH_RECORD" };
+}
+
+export function fetchingRecord() {
+    return { "type": "FETCHING_RECORD" };
+}
+
+export function fetchedRecord() {
+    return { "type": "FETCHED_RECORD" };
+}
+
+export function putRecord() {
+    return { "type": "PUT_RECORD" };
+}
+
+export function savingRecord() {
+    return { "type": "SAVING_RECORD" };
+}
+
+export function savedRecord() {
+    return { "type": "SAVING_RECORD" };
 }

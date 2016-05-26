@@ -1,5 +1,3 @@
-// webpack.config.js
-
 var webpack = require('webpack');
 
 const path = require('path');
@@ -33,6 +31,13 @@ module.exports = {
         hot: true
     },
     plugins: [
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.DefinePlugin({
+            'process.env': {
+                'API_HOST': JSON.stringify(process.env.API_HOST),
+                'API_PORT': JSON.stringify(process.env.API_PORT),
+                'API_TOKEN': JSON.stringify(process.env.API_TOKEN)
+            }
+        })
     ]
 };
