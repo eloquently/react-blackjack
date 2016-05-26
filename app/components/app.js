@@ -39,6 +39,7 @@ export class App extends React.Component {
                     <Link to="/settings">Settings</Link>
                 </div>
                 { mainContent }
+                { this.props.savingRecord ? "Saving..." : undefined }
             </div>
         );
     }
@@ -50,7 +51,8 @@ function mapStateToProps(state) {
         dealerHand: state.game.get('dealerHand'),
         gameOver: state.game.get('gameOver'),
         playerWon: state.game.get('playerWon'),
-        fetchingRecord: state.api.get('fetchingRecord')
+        fetchingRecord: state.api.get('fetchingRecord'),
+        savingRecord: state.api.get('savingRecord')
     };
 }
 

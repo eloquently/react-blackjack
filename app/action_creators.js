@@ -47,5 +47,9 @@ export function savingRecord() {
 }
 
 export function savedRecord() {
-    return { "type": "SAVING_RECORD" };
+    return { "type": "SAVED_RECORD" };
+}
+
+export function setToken(token) {
+    return { "type": "SET_TOKEN", token };
 }

@@ -7,6 +7,7 @@ import createSagaMiddleware from 'redux-saga';
 import { Router, Route, hashHistory } from 'react-router';
 import { Map } from 'immutable';
 import queryString from 'query-string';
+import randomstring from 'randomstring';
 
 import reducer from './reducers/reducer';
 import { setupGame, fetchRecord } from '../app/action_creators';
@@ -18,11 +19,14 @@ import { SettingsContainer } from './components/settings';
 
 import { syncHistoryWithStore } from 'react-router-redux';
 
+
+
 require('./css/main.scss');
 
 const sagaMiddleware = createSagaMiddleware();
 
-const userToken = queryString.parse(window.location.search).user;
+const userToken = queryString.parse(window.location.search).user || 
+                      randomstring.generate(12);
 
 const initialState = { settings: new Map({speed: 750, userToken}) };
 
