@@ -16,7 +16,7 @@ export function* dealToDealerUntilDone(getState) {
         } else {
             break;
         }
-        yield call(delay, 500);
+        yield call(delay, getState().settings.get('speed'));
     }
     yield put(determineWinner());
 }

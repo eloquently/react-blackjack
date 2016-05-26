@@ -25,3 +25,7 @@ export function dealToDealer(seed=new Date().getTime()) {
 export function determineWinner() {
     return { "type": "DETERMINE_WINNER" };
 }
+
+export function setSpeed(newSpeed) {
+    return { "type": "SET_SPEED", newSpeed };
+}
