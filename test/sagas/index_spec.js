@@ -1,17 +1,19 @@
 import { expect } from 'chai';
-import runSagas from '../../app/sagas/index';
+import watchActions from '../../app/sagas/index';
 
 describe('sagas', () => {
-    describe('runSagas()', () => {
+    describe('watchActions()', () => {
         it('counts up', () => {
-            const generator = runSagas();
+            const generator = watchActions();
             let i;
+            i = generator.next().value;
+            expect(i).to.eq('start');
             i = generator.next().value;
             expect(i).to.eq(0);
             i = generator.next().value;
-            expect(i).to.eq(1);
+            expect(i).to.eq('end loop');
             i = generator.next().value;
-            expect(i).to.eq(2);
+            expect(i).to.eq(1);
         });
-    })
+    });
 });
