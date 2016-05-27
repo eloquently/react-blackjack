@@ -56,23 +56,37 @@ const dealToPlayer = (currentState, seed) => {
     return currentState.merge(newState);
 };
 
+const dealToDealer = (currentState, seed) => {
+    const [deck, newCard] = deal(
+        currentState.get('deck'), 1, seed
+    );
+    
+    const dealerHand = currentState
+        .get('dealerHand').push(newCard.get(0));
+    
+    return currentState.merge(new Map({ deck, dealerHand }));
+};
+
 const stand = (currentState, seed) => {
-    let newState = new Map({"hasStood": true});
-    
     let dealerHand = currentState.get('dealerHand');
-    let deck = currentState.get('deck');
     
-    dealerHand = dealerHand.filter((element) => element != new Map());
+    dealerHand = dealerHand.filter(
+        (element) => element != new Map()
+    );
     
-    while(score(dealerHand) < 17) {
-        let newCards;
-        [deck, newCards] = deal(deck, 1, seed);
-        dealerHand = dealerHand.push(newCards.get(0));
-    }
+    let newState = new Map({
+        "hasStood": true, 
+        dealerHand
+    });
     
+    return currentState.merge(newState);
+};
+
+const determineWinner = (currentState) => {
+    const dealerHand = currentState.get('dealerHand');
+    const playerHand = currentState.get('playerHand');
     let winCount = currentState.get('winCount');
     let lossCount = currentState.get('lossCount');
-    const playerHand = currentState.get('playerHand');
     
     const playerScore = score(playerHand);
     const dealerScore = score(dealerHand);
@@ -88,7 +102,10 @@ const stand = (currentState, seed) => {
     
     const gameOver = true;
     
-    newState = newState.merge({dealerHand, deck, winCount, lossCount, gameOver, playerWon});
+    const newState = new Map({
+        dealerHand, winCount, lossCount, 
+        gameOver, playerWon
+    });
     
     return currentState.merge(newState);
 };
@@ -103,6 +120,10 @@ export default function(currentState=new Map(), action) {
             return dealToPlayer(currentState, action.seed);
         case 'STAND':
             return stand(currentState, action.seed);
+        case 'DEAL_TO_DEALER':
+            return dealToDealer(currentState, action.seed);
+        case 'DETERMINE_WINNER':
+            return determineWinner(currentState);
     }
     return currentState;
 }
