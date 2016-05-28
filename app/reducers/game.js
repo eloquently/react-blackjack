@@ -1,6 +1,6 @@
 import { Map } from 'immutable';
 
-import { newDeck, deal, score } from './lib/cards';
+import { newDeck, deal, score } from '../lib/cards';
 
 const setupGame = (currentState, seed) => {
     let deck = newDeck(seed);

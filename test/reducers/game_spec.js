@@ -3,18 +3,24 @@ import { Map, List, fromJS } from 'immutable';
 import { setupGame, setRecord, 
          dealToPlayer, stand,
          dealToDealer, determineWinner 
-       } from '../app/action_creators';
-import { newDeck } from '../app/lib/cards';
+       } from '../../app/action_creators';
+import { newDeck } from '../../app/lib/cards';
 import proxyquire from 'proxyquire';
 import sinon from 'sinon';
 
-import reducer from '../app/reducer';
+import reducer from '../../app/reducers/game';
+
+const reducerPath = '../../app/reducers/game';
+const cardsPath = '../lib/cards';
 
 describe('reducer', () => {
     describe("SETUP_GAME", () => {
         const action = setupGame();
         const cardUtils = { };
-        const stubbedReducer = proxyquire('../app/reducer.js', {'./lib/cards': cardUtils}).default;
+        const stubbedReducer = proxyquire(
+            reducerPath, 
+            {[cardsPath]: cardUtils}
+        ).default;
         
         describe("when not dealt winning hand", () => {
             cardUtils.score = () => 10;
@@ -182,11 +188,9 @@ describe('reducer', () => {
     describe("DETERMINE_WINNER", () => {
         const action = determineWinner();
         const cardUtils = { };
-        const immutableStubs = { };
         const stubbedReducer = proxyquire(
-            '../app/reducer.js', {
-                './lib/cards': cardUtils, 
-                'immutable': immutableStubs 
+            reducerPath, {
+                [cardsPath]: cardUtils
             }
         ).default;
         
