@@ -13,6 +13,7 @@ import reducer from './reducers/index';
 import { setupGame,
          setRecord } from '../app/action_creators';
 import watchActions from './sagas/index';
+import { Settings } from './components/settings';
 
 require('./css/main.scss');
 
@@ -36,8 +37,8 @@ store.dispatch(setupGame());
 ReactDOM.render(
     <Provider store={store}>
         <Router history={history}>
-            <Route path="/" component={AppContainer}>
-            </Route>
+            <Route path="/" component={AppContainer} />
+            <Route path="/settings" component={Settings} />
         </Router>
     </Provider>,
     document.getElementById('app')

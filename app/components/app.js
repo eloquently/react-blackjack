@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router';
 import { InfoContainer } from './info';
 import Hand from './hand';
 import { connect } from 'react-redux';
@@ -13,6 +14,9 @@ export class App extends React.Component {
         
         return (
             <div className="app">
+                <div className="links">
+                    <Link to="/settings">Settings</Link>    
+                </div>
                 <h1>React Blackjack</h1>
                 <InfoContainer />
                 { messageComponent }
