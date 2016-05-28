@@ -6,6 +6,8 @@ import { createStore, applyMiddleware,
 import { Provider } from 'react-redux';
 import createSagaMiddleware from 'redux-saga';
 import { Map } from 'immutable';
+import { Router, Route, hashHistory } from 'react-router';
+import { syncHistoryWithStore } from 'react-router-redux';
 
 import reducer from './reducers/index';
 import { setupGame,
@@ -26,12 +28,17 @@ const store = createStore(reducer, initialState, compose(
 
 sagaMiddleware.run(watchActions);
 
+const history = syncHistoryWithStore(hashHistory, store);
+
 store.dispatch(setRecord(0, 0));
 store.dispatch(setupGame());
 
 ReactDOM.render(
     <Provider store={store}>
-        <AppContainer />
+        <Router history={history}>
+            <Route path="/" component={AppContainer}>
+            </Route>
+        </Router>
     </Provider>,
     document.getElementById('app')
 );
