@@ -27,10 +27,10 @@ export class App extends React.Component {
 
 function mapStateToProps(state) {
     return {
-        playerHand: state.get('playerHand'),
-        dealerHand: state.get('dealerHand'),
-        gameOver: state.get('gameOver'),
-        playerWon: state.get('playerWon')
+        playerHand: state.game.get('playerHand'),
+        dealerHand: state.game.get('dealerHand'),
+        gameOver: state.game.get('gameOver'),
+        playerWon: state.game.get('playerWon')
     };
 }
 

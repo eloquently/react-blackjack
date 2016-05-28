@@ -6,7 +6,7 @@ import { createStore, applyMiddleware,
 import { Provider } from 'react-redux';
 import createSagaMiddleware from 'redux-saga';
 
-import reducer from './reducer';
+import reducer from './reducers/index';
 import { setupGame,
          setRecord } from '../app/action_creators';
 import watchActions from './sagas/index';

@@ -4,7 +4,7 @@ import { select, put, call } from 'redux-saga/effects';
 import { score } from '../lib/cards';
 import { dealToDealer, determineWinner } from '../action_creators';
 
-const getDealerHand = (state) => state.get('dealerHand');
+const getDealerHand = (state) => state.game.get('dealerHand');
 
 export function* onStand() {
     let dealerHand;
