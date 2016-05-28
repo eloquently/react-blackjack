@@ -5,8 +5,10 @@ import { score } from '../lib/cards';
 import { dealToDealer, determineWinner } from '../action_creators';
 
 const getDealerHand = (state) => state.game.get('dealerHand');
+const getSpeed = (state) => state.settings.get('speed');
 
 export function* onStand() {
+    const dealSpeed = yield select(getSpeed);
     let dealerHand;
     while(true) {
         yield put(dealToDealer());
@@ -15,7 +17,7 @@ export function* onStand() {
             break;
         }
         else {
-            yield call(delay, 750);
+            yield call(delay, dealSpeed);
         }
     }
     yield put(determineWinner());

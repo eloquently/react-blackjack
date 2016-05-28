@@ -5,6 +5,7 @@ import { createStore, applyMiddleware,
          compose } from 'redux';
 import { Provider } from 'react-redux';
 import createSagaMiddleware from 'redux-saga';
+import { Map } from 'immutable';
 
 import reducer from './reducers/index';
 import { setupGame,
@@ -13,9 +14,11 @@ import watchActions from './sagas/index';
 
 require('./css/main.scss');
 
+const initialState = { settings: new Map({speed: 750}) };
+
 const sagaMiddleware = createSagaMiddleware();
 
-const store = createStore(reducer, undefined, compose(
+const store = createStore(reducer, initialState, compose(
     applyMiddleware(sagaMiddleware),
     window.devToolsExtension ? 
         window.devToolsExtension() : f => f

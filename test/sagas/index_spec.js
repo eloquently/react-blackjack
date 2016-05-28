@@ -44,6 +44,9 @@ describe('sagas', () => {
             it('yields correct effects', () => {
                 cardUtils.score.returns(21);
                 
+                expect(selectorName(generator.next())).to
+                    .eq('getSpeed');
+                    
                 expect(actionType(generator.next())).to
                     .eq('DEAL_TO_DEALER');
                 
@@ -62,6 +65,9 @@ describe('sagas', () => {
             it('yields correct effects', () => {
                 cardUtils.score.onCall(0).returns(10);
                 cardUtils.score.onCall(1).returns(21);
+                
+                expect(selectorName(generator.next())).to
+                    .eq('getSpeed');
 
                 expect(actionType(generator.next())).to
                     .eq('DEAL_TO_DEALER');
