@@ -1,12 +1,19 @@
 import React from 'react';
 import { reduxForm } from 'redux-form';
+import { setSpeed } from '../action_creators';
+
+const onSubmit = (values, dispatch) => {
+    dispatch(setSpeed(parseInt(values.speed)));
+};
 
 export class DealerSpeedForm extends React.Component {
     render() {
-        console.log(this.props);
+        const speed = this.props.fields.speed;
+        const handleSubmit = this.props.handleSubmit;
+        const val = speed.value || this.props.initialSpeed;
         return (
             <div class="dealer-speed-form">
-                <form onSubmit={this.props.handleSubmit}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     {[
                         ["Fast", 250], 
                         ["Normal", 750],
@@ -16,6 +23,8 @@ export class DealerSpeedForm extends React.Component {
                             {el[0]}
                             <input type="radio" 
                                    name="speed"
+                                   {...speed}
+                                   checked={val == el[1]}
                                    value={el[1]} />
                         </label>
                       ))
@@ -27,7 +36,11 @@ export class DealerSpeedForm extends React.Component {
     }
 }
 
+const mapStateToProps = (state) => {
+    return { initialSpeed: state.settings.get('speed') }; 
+};
+
 export const DealerSpeedFormContainer = reduxForm({
     form: 'dealerSpeed',
     fields: ['speed']
-})(DealerSpeedForm);
+}, mapStateToProps)(DealerSpeedForm);
