@@ -35,6 +35,9 @@ export class App extends React.Component {
                 </div>
                 <h1>React Blackjack</h1>
                 {gameComponent}
+                {this.props.patchingRecord ? 
+                    "Saving..." 
+                    : "" }
             </div>
         );
     }
@@ -46,7 +49,8 @@ function mapStateToProps(state) {
         dealerHand: state.game.get('dealerHand'),
         gameOver: state.game.get('gameOver'),
         playerWon: state.game.get('playerWon'),
-        fetchingRecord: state.api.get('fetchingRecord')
+        fetchingRecord: state.api.get('fetchingRecord'),
+        patchingRecord: state.api.get('patchingRecord')
     };
 }
 

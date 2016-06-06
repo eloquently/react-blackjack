@@ -18,3 +18,15 @@ export function fetchUser(token) {
         }
     }).then(response => response.json());
 }
+
+export function patchUser(token, body) {
+    console.log(body);
+    console.log(JSON.stringify(body));
+    return fetch(makeUrl(token), {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    }).then(response => response.json());
+}

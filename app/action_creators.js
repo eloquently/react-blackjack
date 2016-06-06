@@ -41,3 +41,15 @@ export function fetchingRecord() {
 export function fetchedRecord() {
     return { "type": "FETCHED_RECORD" };
 }
+
+export function patchRecord() {
+    return { "type": "PATCH_RECORD" };
+}
+
+export function patchingRecord() {
+    return { "type": "PATCHING_RECORD" };
+}
+
+export function patchedRecord() {
+    return { "type": "PATCHED_RECORD" };
+}
