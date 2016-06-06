@@ -14,7 +14,8 @@ import randomstring from 'randomstring';
 
 import reducer from './reducers/index';
 import { setupGame,
-         setRecord } from '../app/action_creators';
+         setRecord,
+         fetchRecord } from '../app/action_creators';
 import watchActions from './sagas/index';
 import { Settings } from './components/settings';
 
@@ -40,7 +41,7 @@ sagaMiddleware.run(watchActions);
 
 const history = syncHistoryWithStore(hashHistory, store);
 
-store.dispatch(setRecord(0, 0));
+store.dispatch(fetchRecord());
 store.dispatch(setupGame());
 
 ReactDOM.render(

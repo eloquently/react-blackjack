@@ -29,3 +29,7 @@ export function determineWinner() {
 export function setSpeed(speed) {
     return { "type": "SET_SPEED", speed };
 }
+
+export function fetchRecord() {
+    return { "type": "FETCH_RECORD" };
+}
