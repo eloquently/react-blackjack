@@ -5,7 +5,8 @@ import { reducer as form } from 'redux-form';
 
 import game from './game';
 import settings from './settings';
+import api from './api';
 
 export default combineReducers({
-    game, settings, routing, form
+    game, settings, api, routing, form
 });
