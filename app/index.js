@@ -33,7 +33,7 @@ const sagaMiddleware = createSagaMiddleware();
 
 const store = createStore(reducer, initialState, compose(
     applyMiddleware(sagaMiddleware),
-    window.devToolsExtension ? 
+    window.devToolsExtension && process.env.NODE_ENV !== 'production' ? 
         window.devToolsExtension() : f => f
 ));
 
