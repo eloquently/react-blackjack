@@ -11,22 +11,24 @@ function makeUrl(token) {
 }
 
 export function fetchUser(token) {
-    return fetch(makeUrl(token), {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }).then(response => response.json());
+    console.log('this would fetch the user...');
+    return new Promise((resolve) => resolve({ win_count: 0, loss_count: 0 }));
+    // return fetch(makeUrl(token), {
+    //     method: 'GET',
+    //     headers: {
+    //         'Content-Type': 'application/json'
+    //     }
+    // }).then(response => response.json());
 }
 
 export function patchUser(token, body) {
-    console.log(body);
-    console.log(JSON.stringify(body));
-    return fetch(makeUrl(token), {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-    }).then(response => response.json());
+    console.log('this would save the user...');
+    return new Promise((resolve) => resolve());
+    // return fetch(makeUrl(token), {
+    //     method: 'PATCH',
+    //     headers: {
+    //         'Content-Type': 'application/json'
+    //     },
+    //     body: JSON.stringify(body)
+    // }).then(response => response.json());
 }

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "webpack": "node_modules/.bin/webpack",
+    "webpack:prod": "npm run webpack -- --config webpack.prod.config.js --progress",
     "webpack:watch": "npm run webpack -- --watch",
     "test": "mocha --compilers js:babel-core/register --require ./test/test_helper.js --recursive",
     "test:watch": "npm run test -- --watch",
