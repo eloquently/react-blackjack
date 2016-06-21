@@ -20,9 +20,15 @@ describe('sagas', () => {
         const generator = watchActions();
         const next = generator.next();
         
-        it('yields takeLatest', () => {
-            expect(next.value.name).to
+        it('watches stand, fetch record, and setup game', () => {
+            expect(next.value[0].name).to
                 .eq('takeLatest(STAND, onStand)');
+                
+            expect(next.value[1].name).to
+                .eq('takeLatest(FETCH_RECORD, onFetchRecord)');
+                
+            expect(next.value[2].name).to
+                .eq('takeLatest(SETUP_GAME, onPatchRecord)');
         });
     });
     
